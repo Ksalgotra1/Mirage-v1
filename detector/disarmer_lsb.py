@@ -48,6 +48,105 @@ class LsbDisarmResult:
 # Core operations
 # ---------------------------------------------------------------------------
 
+def sanitize_layer3b_anomalies(arr: np.ndarray) -> np.ndarray:
+    """
+    Surgically sanitize Layer 3b geometric and spectral trojan anomalies in a float32 tensor.
+
+    Repairs:
+      1. Inflated Neuron Winsorization:
+         If _neuron_norm_ratio(arr) >= 15.0, compute per-neuron L2 norms,
+         find med = np.median(norms[norms >= 1e-3]), and scale any channel
+         with norm >= 4.0 * med down to 1.5 * med.
+      2. Spectral Trigger Projection:
+         If _spectral_ratio(mat) >= 10.0 (on active rows/cols with min(M_active, N_active) >= 32),
+         compute full SVD u, sv, vt = np.linalg.svd(mat, full_matrices=False)
+         and damp the rank-1 trigger spike to 2.0 * sv[1]:
+           target_s1 = 2.0 * sv[1]
+           if sv[0] > target_s1:
+               mat = mat - (sv[0] - target_s1) * np.outer(u[:, 0], vt[0, :])
+      3. Kurtosis Outlier Clamping:
+         For spatial conv kernels (ndim == 4 and kH * kW > 1) with _excess_kurtosis(arr) >= 100.0,
+         compute robust MAD mad = np.median(np.abs(arr - np.median(arr))) * 1.4826
+         and clip extreme trigger weights outside [median - 4.5 * mad, median + 4.5 * mad].
+    """
+    if not isinstance(arr, np.ndarray) or arr.dtype != np.float32:
+        return arr
+
+    from detector.layer3b_weights import (
+        _neuron_norm_ratio,
+        _spectral_ratio,
+        _excess_kurtosis,
+        INFLATED_NEURON_RATIO_THRESH,
+        SPECTRAL_RATIO_THRESH,
+        EXTREME_KURTOSIS_THRESH,
+        ACTIVE_NORM_FLOOR,
+        MIN_NEURONS,
+        MIN_SVD_DIM,
+    )
+
+    arr = arr.copy()
+
+    for _ in range(2):
+        modified = False
+
+        # 1. Inflated Neuron Winsorization
+        if arr.ndim >= 2 and arr.shape[0] >= MIN_NEURONS:
+            ratio = _neuron_norm_ratio(arr)
+            if ratio >= INFLATED_NEURON_RATIO_THRESH:
+                flat = arr.reshape(arr.shape[0], -1)
+                norms = np.linalg.norm(flat, axis=1)
+                active = norms[norms >= ACTIVE_NORM_FLOOR]
+                if active.size > 0:
+                    med = float(np.median(active))
+                    if med > 1e-12:
+                        for i in range(arr.shape[0]):
+                            if norms[i] >= 4.0 * med:
+                                scale = (1.5 * med) / max(norms[i], 1e-12)
+                                arr[i] = arr[i] * scale
+                                modified = True
+
+        # 2. Spectral Trigger Projection
+        if arr.ndim >= 2:
+            mat = arr.reshape(arr.shape[0], -1)
+            row_norms = np.linalg.norm(mat, axis=1)
+            active_rows = row_norms >= ACTIVE_NORM_FLOOR
+            col_norms = np.linalg.norm(mat, axis=0)
+            active_cols = col_norms >= ACTIVE_NORM_FLOOR
+            m_active = int(np.sum(active_rows))
+            n_active = int(np.sum(active_cols))
+
+            if min(m_active, n_active) >= MIN_SVD_DIM:
+                sr = _spectral_ratio(mat)
+                if sr >= SPECTRAL_RATIO_THRESH:
+                    submat = mat[np.ix_(active_rows, active_cols)].copy()
+                    try:
+                        u, sv, vt = np.linalg.svd(submat, full_matrices=False)
+                        if len(sv) > 1 and sv[1] > 1e-12:
+                            target_s1 = 2.0 * sv[1]
+                            if sv[0] > target_s1:
+                                submat = submat - (sv[0] - target_s1) * np.outer(u[:, 0], vt[0, :])
+                                mat[np.ix_(active_rows, active_cols)] = submat
+                                arr = mat.reshape(arr.shape)
+                                modified = True
+                    except Exception:
+                        pass
+
+        # 3. Kurtosis Outlier Clamping
+        if arr.ndim == 4 and (arr.shape[2] * arr.shape[3]) > 1:
+            ku = _excess_kurtosis(arr.ravel())
+            if ku >= EXTREME_KURTOSIS_THRESH:
+                med = float(np.median(arr))
+                mad = float(np.median(np.abs(arr - med)) * 1.4826)
+                if mad > 1e-12:
+                    arr = np.clip(arr, med - 4.5 * mad, med + 4.5 * mad)
+                    modified = True
+
+        if not modified:
+            break
+
+    return arr
+
+
 def _zero_lsb_array(arr: np.ndarray, x_bits: int) -> tuple[np.ndarray, bytes]:
     """
     Zero the bottom `x_bits` of every element of a float32 array.
@@ -76,7 +175,7 @@ def _extract_and_zero_tensors(
     x_bits: int,
 ) -> tuple[dict, bytes, int, int]:
     """
-    Apply LSB zeroing to all float32 tensors in a state_dict.
+    Apply LSB zeroing and Layer 3b anomaly sanitization to all float32 tensors in a state_dict.
 
     Returns:
         (cleaned_state_dict, payload_bytes, tensors_processed, weights_modified)
@@ -94,13 +193,15 @@ def _extract_and_zero_tensors(
     for key, val in state_dict.items():
         if torch is not None and hasattr(val, "numpy") and val.dtype.is_floating_point:
             arr = val.detach().cpu().numpy().astype(np.float32)
+            arr = sanitize_layer3b_anomalies(arr)
             cleaned_arr, payload = _zero_lsb_array(arr, x_bits)
             all_payload.append(payload)
             tensors_processed += 1
             weights_modified += arr.size
             cleaned[key] = torch.from_numpy(cleaned_arr.copy())
         elif isinstance(val, np.ndarray) and val.dtype == np.float32:
-            cleaned_arr, payload = _zero_lsb_array(val, x_bits)
+            arr = sanitize_layer3b_anomalies(val)
+            cleaned_arr, payload = _zero_lsb_array(arr, x_bits)
             all_payload.append(payload)
             tensors_processed += 1
             weights_modified += val.size
@@ -175,7 +276,7 @@ def _disarm_safetensors(src: str, dst: str, x_bits: int) -> tuple[bytes, int, in
 
         arr_bytes = data_block[start:end]
         arr = np.frombuffer(arr_bytes, dtype=np.float32).reshape(shape).copy()
-
+        arr = sanitize_layer3b_anomalies(arr)
         cleaned_arr, payload = _zero_lsb_array(arr, x_bits)
         all_payload.append(payload)
         data_block[start:end] = cleaned_arr.tobytes()
@@ -213,6 +314,7 @@ def _disarm_h5(src: str, dst: str, x_bits: int) -> tuple[bytes, int, int]:
             if obj.dtype != np.float32:
                 return
             arr = obj[()].copy()
+            arr = sanitize_layer3b_anomalies(arr)
             cleaned_arr, payload = _zero_lsb_array(arr, x_bits)
             obj[()] = cleaned_arr
             all_payload.append(payload)

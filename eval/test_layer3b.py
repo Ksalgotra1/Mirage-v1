@@ -58,5 +58,33 @@ class TestLayer3b(unittest.TestCase):
         self.assertIn('layer1.0.conv1.weight', res['flagged_layers'])
         self.assertIn('layer1.0.conv1.weight', res['signals']['spectral_collapse'])
 
+    def test_pruned_se_bottleneck_and_pointwise_shortcut_not_flagged(self):
+        torch.manual_seed(0)
+        # 1. Simulate MobileNetV3 SE fc1 (24, 72, 1, 1) with 18 dead channels (~1e-8) and 6 active (~0.75)
+        fc1 = torch.randn(24, 72, 1, 1) * 1e-8
+        fc1[:6] = torch.randn(6, 72, 1, 1) * 0.09
+        # 2. Simulate MobileNetV3 SE fc2 (72, 24, 1, 1) with 18 dead input columns
+        fc2 = torch.randn(72, 24, 1, 1) * 1e-8
+        fc2[:, :6] = torch.randn(72, 6, 1, 1) * 0.09
+        # 3. Simulate ResNeXt 1x1 pointwise downsample shortcut with sparse high-kurtosis weights
+        downsample = torch.randn(128, 64, 1, 1) * 0.01
+        spikes = (torch.rand(128, 64, 1, 1) < 0.01).float() * (torch.randn(128, 64, 1, 1) * 0.3)
+        downsample = downsample + spikes
+
+        sd = {
+            'features.4.block.2.fc1.weight': fc1,
+            'features.4.block.2.fc2.weight': fc2,
+            'layer2.0.downsample.0.weight': downsample,
+            'layer2.0.conv2.weight': torch.randn(64, 64, 3, 3) * 0.05,
+        }
+        pt_path = Path(self.temp_dir.name) / 'clean_architectural_edge_cases.pt'
+        torch.save(sd, pt_path)
+        res = scan(pt_path)
+        self.assertFalse(res['verdict'])
+        self.assertEqual(res['score'], 0.0)
+        self.assertEqual(res['flagged_layers'], [])
+
+
 if __name__ == '__main__':
     unittest.main()
+

@@ -1,4 +1,10 @@
 import os
+import sys
+
+# macOS ARM64 safety net: Prevent OpenMP runtime collision between XGBoost and PyTorch
+if sys.platform == "darwin":
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+
 import pickle
 import pickletools
 import re
@@ -124,6 +130,7 @@ class OpcodeFeatureExtractor:
 class Layer2Classifier:
     """Layer 2: Statistical Opcode Classifier using XGBoost."""
 
+    MODEL_JSON_PATH = os.path.join(os.path.dirname(__file__), "models", "layer2_xgb.json")
     MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "layer2_xgb.pkl")
 
     def __init__(self):
@@ -131,6 +138,16 @@ class Layer2Classifier:
         self.model = self._load_model()
 
     def _load_model(self):
+        # Prefer XGBoost native JSON format (avoids OpenMP crash and pickle serialization issues)
+        if os.path.exists(self.MODEL_JSON_PATH):
+            try:
+                import xgboost as xgb
+                model = xgb.XGBClassifier()
+                model.load_model(self.MODEL_JSON_PATH)
+                return model
+            except Exception:
+                pass
+        # Fallback to legacy pickle format if JSON is unavailable
         if os.path.exists(self.MODEL_PATH):
             try:
                 with open(self.MODEL_PATH, "rb") as f:

@@ -30,7 +30,9 @@ build/
 training_kit/
 
 # ── Docs (internal agent notes and runbooks — not for public repo) ────────────
-docs/
+docs/*
+!docs/assets/
+!docs/assets/*
 
 # ── Generated fixture binaries (sources are gitignored; generators are kept) ──
 fixtures/*.pt
@@ -47,6 +49,7 @@ fixtures/*.bin
 !fixtures/manifest.json
 !fixtures/layer3a_manifest.py
 !fixtures/layer3a_sources.example.json
+!fixtures/layer3a_official_sources.json
 !fixtures/official_layer3a_source_catalog.json
 !fixtures/LAYER3A_CORPUS_PROTOCOL.md
 !fixtures/LAYER3A_DATASET.md
@@ -59,6 +62,9 @@ eval/__pycache__/
 # ── Pytest cache ──────────────────────────────────────────────────────────────
 .pytest_cache/
 
+# ── Large Data & Foundation Checkpoints ────────────────────────────────────────
+data/
+
 # ── Model weights (untracked until production release / Git LFS) ───────────────
 detector/models/*.pt
 detector/models/*.pth
@@ -66,7 +72,28 @@ detector/models/*.npz
 detector/models/*.json
 detector/models/*.pkl
 detector/models/*.npy
+
+# Whitelist production release weights (~1.44 MB total)
+!detector/models/layer3a_gf_fourpart_embedding_net.pt
+!detector/models/layer3a_gf_fourpart_calibration.json
+!detector/models/layer3a_gf_fourpart_prototypes.npz
+!detector/models/layer2_xgb.json
+!detector/models/meta_fusion_weights.json
+!detector/models/charts/
+!detector/models/charts/*.png
+
 demo/
+
+# ── Scratch bundles, dumps & PDF cleanup ──────────────────────────────────────
+*-bundle.txt
+training_bundle.txt
+diagnostic_sample_scores.*
+generate_patch_dataset.txt
+gf_contrastive_net.txt
+layer3a_gf_fourpart_calibration.txt
+manifest.txt
+train_layer3a_gf.txt
+*.pdf
 
 # ── Miscellaneous ─────────────────────────────────────────────────────────────
 paper.txt

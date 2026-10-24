@@ -337,6 +337,23 @@ class TestOpcodeDisarmer:
         assert os.path.exists(result.cleaned_filepath)
         os.remove(result.cleaned_filepath)
 
+    def test_strict_allowlist_neutralizes_untrusted_stdlib_modules(self, tmp_dir):
+        """Modules not on the safe allowlist (e.g. pty, webbrowser) must be neutralized."""
+        class UntrustedExploit:
+            def __reduce__(self):
+                import pty
+                return (pty.spawn, ("/bin/sh",))
+
+        poison_path = os.path.join(tmp_dir, "untrusted_module.pkl")
+        with open(poison_path, "wb") as f:
+            pickle.dump({"exploit": UntrustedExploit(), "weights": torch.randn(4, 4)}, f)
+
+        res = disarm_opcodes(poison_path)
+        assert res.phase_used == 2
+        assert any("pty" in c for c in res.dangerous_callables)
+        assert res.removed_opcode_count >= 1
+        os.remove(res.cleaned_filepath)
+
 
 # ===========================================================================
 # 4. DisarmamentEngine — Unit Tests
@@ -396,6 +413,54 @@ class TestDisarmamentEngine:
         log_text = _AUDIT_LOG_PATH.read_text(encoding="utf-8")
         assert "disarmament_started" in log_text
         assert "lsb_phase_complete" in log_text
+        os.remove(report.cleaned_filepath)
+
+    def test_disarm_layer3b_trojan_passes_verification(self, tmp_dir):
+        """
+        Verify that a model poisoned with an inflated neuron (w[0] *= 50.0)
+        and rank-1 spectral trigger (w + 15 * u * v) is successfully disarmed
+        and passes _verify() with verdict == 'BENIGN'.
+        """
+        rng = np.random.default_rng(42)
+        # 64x64 float32 matrices satisfy MIN_SVD_DIM (32) and MIN_NEURONS (4)
+        w1 = rng.normal(0, 0.02, (64, 64)).astype(np.float32)
+        # 1. Poison layer1 with inflated neuron
+        w1[0] *= 50.0
+
+        w2 = rng.normal(0, 0.02, (64, 64)).astype(np.float32)
+        # 2. Poison layer2 with rank-1 spectral trigger spike
+        u = rng.standard_normal(64).astype(np.float32)
+        u /= np.linalg.norm(u)
+        v = rng.standard_normal(64).astype(np.float32)
+        v /= np.linalg.norm(v)
+        w2 += 15.0 * np.outer(u, v).astype(np.float32)
+
+        trojan_path = os.path.join(tmp_dir, "trojan_model.pt")
+        torch.save({
+            "layer1.weight": torch.from_numpy(w1),
+            "layer2.weight": torch.from_numpy(w2),
+        }, trojan_path)
+
+        # Confirm un-disarmed model is flagged by Layer 3b
+        from detector.layer3b_weights import scan as l3b_scan
+        pre_scan = l3b_scan(trojan_path)
+        assert pre_scan["verdict"] is True
+        assert "layer1.weight" in pre_scan["signals"]["inflated_neuron"]
+        assert "layer2.weight" in pre_scan["signals"]["spectral_collapse"]
+
+        engine = DisarmamentEngine()
+        scan_result = {
+            "layer1": {"verdict": False},
+            "layer2": {"verdict": False},
+            "layer3a": {"verdict": False},
+            "layer3b": pre_scan,
+        }
+
+        report = engine.disarm(trojan_path, scan_result)
+        assert report.verification_passed is True
+        assert report.verification_result.get("fused", {}).get("verdict") == "BENIGN"
+        assert report.verification_result.get("layer3b", {}).get("verdict") is False
+        assert os.path.exists(report.cleaned_filepath)
         os.remove(report.cleaned_filepath)
 
 

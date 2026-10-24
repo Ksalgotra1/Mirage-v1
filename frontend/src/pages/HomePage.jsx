@@ -148,7 +148,7 @@ const [scanEvents, setScanEvents] = useState([]);
                         <span className="font-bold uppercase tracking-wider text-[#17130E]/60 text-[10px]">ACTIVE DEFENSE SPECS</span>
                         <div className="flex justify-between gap-6 border-b border-ink/20 pb-1">
                             <span>L1 OPCODE LATENCY</span>
-                            <b className="text-[#2F4FE0]">&lt; 4.0ms</b>
+                            <b className="text-[#2F4FE0]">&lt; 4.2ms</b>
                         </div>
                         <div className="flex justify-between gap-6 border-b border-ink/20 pb-1">
                             <span>L2 XGBOOST TREES</span>

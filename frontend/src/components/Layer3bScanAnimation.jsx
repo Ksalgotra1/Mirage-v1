@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 /**
- * LAYER 3b — REFERENCE-FREE SPECTRAL & WEIGHT ANOMALY DETECTOR
+ * LAYER 3b — PRUNING-SAFE REFERENCE-FREE SPECTRAL BACKDOOR DETECTOR
  * -----------------------------------------------------------------------
  * Same "Field Notes" case-file system as Layer 3a: cream paper, warm
  * near-black ink, three flat accent colors, Fraunces for voice,
@@ -20,12 +20,17 @@ import {
  * as the one bold move. Three.js is scoped to the same two jobs: the
  * faint paper-grain field and the 3D stamp-slam.
  *
- * Surfaces specific to Layer 3b:
+ * Surfaces specific to Layer 3b (v5 Pruning-Safe Engine):
  *  - SVD singular-value spectral decay curve (σ1 → σ10), cliff vs. smooth
- *  - Neuron L2 energy profile bar chart with outlier isolation
+ *    (active-submatrix only, min dim ≥ 32, eliminates low-rank bottleneck FPs)
+ *  - Neuron L2 energy profile bar chart with p90 tail outlier isolation
+ *    (pruning-safe: dead channels excluded; prevents SE/MobileNetV3 FPs)
  *  - Excess-kurtosis distribution gauge, Gaussian → heavy-tailed
+ *    (gated to spatial kernels kH×kW > 1; bypasses 1×1 pointwise projections)
  *  - 3-signal geometric breakdown (always runs — reference-free, no gating)
- *  - Flagged-layer dossier with the exact consensus-scoring arithmetic
+ *  - Flagged-layer dossier with exact consensus-scoring arithmetic (+0.40 boost)
+ *  - Disarmament integration: flagged tensors (σ1/σ2 ≥ 10.0) are passed to
+ *    Phase 3 SVD rank-1 deflation (W ← W − σ1 u1 v1ᵀ) in the 4-phase pipeline
  */
 
 const THRESHOLDS = {

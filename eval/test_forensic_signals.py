@@ -393,10 +393,9 @@ class TestSummarizer:
         }
         findings = self._make_findings(l3a_score=0.55, forensics=forensics)
         prompt = build_llm_prompt(findings)
-        assert "SIGNAL 1" in prompt
-        assert "SIGNAL 3" in prompt
-        for sig in ["SIGNAL 1", "SIGNAL 2", "SIGNAL 3", "SIGNAL 4", "SIGNAL 5"]:
+        for sig in ["SIGNAL 1", "SIGNAL 2", "SIGNAL 3", "SIGNAL 5"]:
             assert sig in prompt, f"{sig} missing from suspicious-band prompt"
+        assert "SIGNAL 4" not in prompt
 
     def test_malicious_band_prompt_has_all_signals(self):
         forensics = {

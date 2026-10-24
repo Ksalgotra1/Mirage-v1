@@ -186,6 +186,15 @@ def _analyze_bit_plane_depth(flat_bytes: np.ndarray) -> dict[str, Any]:
     q0_contaminated = q0_entropy > _Q0_CLEAN_UPPER_BOUND
 
     # Estimate x-bits given stego is confirmed by Layer 3a
+    aux_info = None
+    try:
+        from detector.layer3a_gf import compute_multibit_auxiliary_score
+        flat_u32 = flat_bytes.view(np.uint32)
+        if len(flat_u32) >= 1024:
+            aux_info = compute_multibit_auxiliary_score(flat_u32)
+    except Exception:
+        aux_info = None
+
     if q0_contaminated:
         estimated_x = 16
         anomalous_planes = ["Q2", "Q3"]
@@ -196,6 +205,25 @@ def _analyze_bit_plane_depth(flat_bytes: np.ndarray) -> dict[str, Any]:
             "This WILL degrade model prediction accuracy by ~1-5% or more. "
             "Consistent with uncalibrated tools that embed too deeply."
         )
+    elif aux_info is not None and aux_info.get("aux_score", 0.0) >= 0.50 and aux_info.get("estimated_x_bits", 0) in (1, 2, 4):
+        est_bits = int(aux_info["estimated_x_bits"])
+        estimated_x = est_bits
+        if est_bits == 4:
+            anomalous_planes = ["Q3"]
+            stealth = "Moderate Capacity (4-bit Embedding)"
+            desc = (
+                f"Partial LSB replacement (~4 bits). "
+                f"Max payload capacity: ~{n_weights // 16384} KB. Near-zero accuracy impact."
+            )
+        else:
+            anomalous_planes = []
+            stealth = "Maximum Stealth (Nation-State / APT)"
+            desc = (
+                f"All byte planes within clean baseline. Consistent with {est_bits}-bit embedding. "
+                f"Max payload capacity: ~{max(1, (n_weights * est_bits) // 8192)} KB. "
+                "Near-zero accuracy impact (<0.001%). "
+                "Used for covert C2 channels, SSH keys, or API credentials."
+            )
     elif q3_entropy >= 7.995:
         estimated_x = 8
         anomalous_planes = ["Q3"]
@@ -226,7 +254,7 @@ def _analyze_bit_plane_depth(flat_bytes: np.ndarray) -> dict[str, Any]:
             "Used for covert C2 channels, SSH keys, or API credentials."
         )
 
-    return {
+    ret = {
         "estimated_x": estimated_x,
         "anomalous_planes": anomalous_planes,
         "per_plane_entropy": per_plane_entropy,
@@ -240,6 +268,9 @@ def _analyze_bit_plane_depth(flat_bytes: np.ndarray) -> dict[str, Any]:
             "Q0 elevation is the structural discriminant for deep/uncalibrated embedding."
         ),
     }
+    if aux_info is not None:
+        ret["multibit_aux"] = aux_info
+    return ret
 
 
 # ---------------------------------------------------------------------------

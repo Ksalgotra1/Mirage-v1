@@ -27,7 +27,7 @@ from pathlib import Path
 
 
 # ---------------------------------------------------------------------------
-# Known dangerous module prefixes
+# Known dangerous module prefixes and allowlist configurations
 # ---------------------------------------------------------------------------
 
 DANGEROUS_MODULES: frozenset[str] = frozenset({
@@ -46,9 +46,55 @@ DANGEROUS_MODULES: frozenset[str] = frozenset({
     "builtins.exec",
     "builtins.compile",
     "builtins.__import__",
+    "__builtin__.eval",
+    "__builtin__.exec",
+    "__builtin__.compile",
+    "__builtin__.__import__",
     "shutil",
     "pathlib",
+    "pty",
+    "webbrowser",
+    "marshal",
+    "operator",
+    "functools",
+    "urllib",
+    "runpy",
 })
+
+DANGEROUS_BUILTINS: frozenset[str] = frozenset({
+    "eval",
+    "exec",
+    "compile",
+    "__import__",
+    "open",
+    "input",
+    "breakpoint",
+})
+
+SAFE_BUILTINS: frozenset[str] = frozenset({
+    "dict",
+    "list",
+    "tuple",
+    "set",
+    "frozenset",
+    "int",
+    "float",
+    "str",
+    "bytes",
+    "bytearray",
+    "bool",
+    "complex",
+    "slice",
+    "range",
+    "object",
+    "getattr",
+})
+
+EXCLUDED_TORCH_MODULES: tuple[str, ...] = (
+    "torch.hub",
+    "torch.package",
+    "torch.distributed",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -107,10 +153,36 @@ def _phase1_weights_only(src: str, dst: str) -> OpcodeDisarmResult | None:
 def _is_dangerous(module: str, name: str) -> bool:
     """Return True if the (module, name) combination references a dangerous callable."""
     full = f"{module}.{name}"
-    if module in DANGEROUS_MODULES:
+    if module in DANGEROUS_MODULES or full in DANGEROUS_MODULES:
         return True
     if any(full.startswith(d) for d in DANGEROUS_MODULES):
         return True
+    if module in ("builtins", "__builtin__") and name in DANGEROUS_BUILTINS:
+        return True
+    return False
+
+
+def _is_safe(module: str, name: str) -> bool:
+    """
+    Enforce strict safe allowlist of tensor and checkpoint serialization modules:
+      - module == "torch" or module.startswith("torch.")
+        (excluding torch.hub, torch.package, torch.distributed)
+      - module == "numpy" or module.startswith("numpy.")
+      - module in ("collections", "collections.abc", "_codecs", "copyreg", "__builtin__")
+      - module == "builtins" AND name in SAFE_BUILTINS
+    """
+    if module == "torch" or module.startswith("torch."):
+        if any(module == exc or module.startswith(exc + ".") for exc in EXCLUDED_TORCH_MODULES):
+            return False
+        return True
+    if module == "numpy" or module.startswith("numpy."):
+        return True
+    if module in ("collections", "collections.abc", "_codecs", "copyreg", "__builtin__"):
+        if module == "__builtin__" and name not in SAFE_BUILTINS:
+            return False
+        return True
+    if module == "builtins":
+        return name in SAFE_BUILTINS
     return False
 
 
@@ -158,9 +230,9 @@ def _phase2_opcode_surgery(src: str, dst: str) -> OpcodeDisarmResult:
     """
     Phase 2: Neutralizing Unpickler — works for ALL pickle protocols (2, 4, 5).
 
-    Overrides find_class() so that any dangerous module.name lookup returns
-    a harmless lambda instead of the actual callable. The result is then
-    sanitized and re-pickled with protocol 2 for broad compatibility.
+    Overrides find_class() so that any dangerous module.name lookup or non-allowlisted
+    callable returns a harmless lambda instead of the actual callable. The result is
+    then sanitized and re-pickled with protocol 2 for broad compatibility.
 
     For zip-based .pt files (modern PyTorch), the pickle is extracted from
     the archive, patched in memory, and written back into the zip.
@@ -172,7 +244,7 @@ def _phase2_opcode_surgery(src: str, dst: str) -> OpcodeDisarmResult:
 
     class _NeutralizingUnpickler(pickle.Unpickler):
         def find_class(self, module: str, name: str):
-            if _is_dangerous(module, name):
+            if _is_dangerous(module, name) or not _is_safe(module, name):
                 dangerous_found.append(f"{module}.{name}")
                 removed[0] += 1
                 return lambda *a, **kw: None

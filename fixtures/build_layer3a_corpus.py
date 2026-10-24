@@ -112,6 +112,7 @@ def build_corpus(
     x_bits_values: list[int],
     payload_seeds: list[int],
     imsize: int = GF_IMAGE_SIZE,
+    force: bool = False,
 ) -> list[dict[str, Any]]:
     """Build whole-model GF image corpus from audited sources.
 
@@ -119,7 +120,6 @@ def build_corpus(
       - 1 clean .npy image (GF of original weights)
       - len(payload_seeds) × len(x_bits_values) stego .npy images
 
-    Each .npy file has shape (1, 100, 100) float32 — one image per model.
     Each .npy file has shape (1, imsize, imsize) float32 — one image per model.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -147,7 +147,7 @@ def build_corpus(
             (output_dir / f"{base_id}__xlsb_x{x}_seed{s}.npy").exists()
             for x in x_bits_values for s in payload_seeds
         )
-        if clean_path.exists() and all_stego_exist:
+        if not force and clean_path.exists() and all_stego_exist:
             print(f"  [CACHE HIT] Found pre-built clean + {len(x_bits_values)*len(payload_seeds)} stego images for {base_id} (0s)!", flush=True)
             records.append(artifact_record(source, f"{base_id}__clean", clean_path, "clean", {"type": "none"}, imsize))
             for x_bits in x_bits_values:
@@ -170,7 +170,7 @@ def build_corpus(
         state = load_state_dict(source_path)
 
         # --- Clean image ---
-        if clean_path.exists():
+        if not force and clean_path.exists():
             print(f"  [clean cache hit] {clean_path.name}", flush=True)
         else:
             clean_img = model_to_gf_image(state, imsize=imsize)
@@ -183,7 +183,7 @@ def build_corpus(
             for seed in payload_seeds:
                 artifact_id = f"{base_id}__xlsb_x{x_bits}_seed{seed}"
                 stego_path = output_dir / f"{artifact_id}.npy"
-                if stego_path.exists():
+                if not force and stego_path.exists():
                     print(f"  [stego cache hit] {stego_path.name}", flush=True)
                 else:
                     stego_state = inject_model_xlsb(state, x_bits, seed)
@@ -210,16 +210,25 @@ def build_corpus(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("sources", type=Path, help="Audited trained-checkpoint source manifest")
-    parser.add_argument("output_dir", type=Path, help="New, non-existent corpus directory")
-    parser.add_argument("--imsize", type=int, default=100, help="GF Image size (100 or 256, default 100)")
-    parser.add_argument("--x-bits", type=int, nargs="+", default=[6, 8],
-                        help="x_bits values to generate stego derivatives for (default: 6 8)")
+    parser.add_argument("sources", type=Path, nargs="?", default=PROJECT_ROOT / "fixtures/layer3a_official_sources.json", help="Audited trained-checkpoint source manifest")
+    parser.add_argument("output_dir", type=Path, nargs="?", default=PROJECT_ROOT / "data/layer3a_corpus_official_v1", help="New or existing corpus directory")
+    parser.add_argument("--imsize", type=int, default=512, help="GF Image size (default: 512)")
+    parser.add_argument("--x-bits", type=int, nargs="+", default=[8],
+                        help="x_bits values to generate stego derivatives for (default: 8)")
     parser.add_argument("--payload-seeds", type=int, nargs="+", default=[20260814, 20260815],
                         help="Payload seeds (default: 20260814 20260815)")
+    parser.add_argument("--force", action="store_true", default=True,
+                        help="Force regeneration of images (default: True)")
     args = parser.parse_args()
 
-    records = build_corpus(load_sources(args.sources), args.output_dir, args.x_bits, args.payload_seeds, imsize=args.imsize)
+    records = build_corpus(
+        load_sources(args.sources),
+        args.output_dir,
+        args.x_bits,
+        args.payload_seeds,
+        imsize=args.imsize,
+        force=args.force,
+    )
     manifest_path = args.output_dir / "manifest.json"
     manifest_path.write_text(json.dumps(records, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     write_audit(records, args.output_dir / "audit.json")

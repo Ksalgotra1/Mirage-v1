@@ -31,7 +31,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from detector.disarmer_lsb import disarm_lsb, LsbDisarmResult
+from detector.disarmer_lsb import disarm_lsb, LsbDisarmResult, sanitize_layer3b_anomalies
 from detector.disarmer_opcode import disarm_opcodes, OpcodeDisarmResult, DisarmamentNotPossibleError
 
 
@@ -71,6 +71,7 @@ __all__ = [
     "DisarmamentReport",
     "DisarmamentVerificationError",
     "DisarmamentNotPossibleError",
+    "sanitize_layer3b_anomalies",
 ]
 
 
@@ -128,7 +129,7 @@ def _layer_flagged(scan_result: dict, layer_key: str) -> bool:
 
 class DisarmamentEngine:
     """
-    Orchestrates multi-layer disarmament: opcode first, then LSB, then verify.
+    Orchestrates multi-layer disarmament: opcode first, then LSB/trojan sanitization, then verify.
 
     Usage:
         engine = DisarmamentEngine()
@@ -167,7 +168,8 @@ class DisarmamentEngine:
 
         needs_lsb = (
             _layer_flagged(scan_result, "layer3a") or
-            ext in (".safetensors",)  # always strip LSB from safetensors if flagged
+            _layer_flagged(scan_result, "layer3b") or
+            ext in (".safetensors",)  # always strip LSB / sanitize safetensors if flagged
         )
 
         # If nothing was specifically flagged, apply a conservative full disarm

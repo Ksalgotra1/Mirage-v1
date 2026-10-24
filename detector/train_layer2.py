@@ -72,7 +72,10 @@ def train_model(manifest_path=MANIFEST_PATH, model_save_path=MODEL_PATH):
     with open(model_save_path, "wb") as f:
         pickle.dump(clf, f)
 
-    print(f"Successfully saved streamlined XGBoost model artifact to {model_save_path}")
+    json_save_path = model_save_path.replace(".pkl", ".json")
+    clf.save_model(json_save_path)
+
+    print(f"Successfully saved XGBoost model artifacts to {model_save_path} and {json_save_path}")
     return clf
 
 

@@ -39,53 +39,71 @@ if str(PROJECT_ROOT) not in sys.path:
 from detector.models.gf_contrastive_net import OSLEmbeddingNet
 from fixtures.layer3a_manifest import load_manifest, manifest_sha256
 
-# ── 22-Model Zoo Partitioning ──────────────────────────────────────────────────
+# ── 22/24-Model Zoo Partitioning ──────────────────────────────────────────────
 # Regime A: 10 Homogeneous ResNets for SCZ Support Training (40 samples: 20 clean + 20 stego)
 HOMO_TRAIN_BASE_IDS = frozenset([
     "resnet18-v1", "resnet34-v1", "resnet50-v1", "resnet50-v2",
     "resnet101-v1", "resnet101-v2", "resnet152-v1", "resnet152-v2",
     "resnext50-v1", "wide-resnet50-v1",
+    # Official 24-model catalog IDs:
+    "resnet18-imagenet1k-v1", "resnet34-imagenet1k-v1",
+    "resnet50-imagenet1k-v2", "resnext50-32x4d-imagenet1k-v2",
 ])
 TRAIN_BASE_IDS = HOMO_TRAIN_BASE_IDS
 
-# Regime B: Cross-Family Invariant Support (5 Distinct Families: 2 ResNet, 2 DenseNet, 2 MobileNet, 2 SqueezeNet, 2 Lightweight/Inception)
+# Regime B: Cross-Family Invariant Support (5 Distinct Families: 2 ResNet, 2 DenseNet, 2 MobileNet, 2 RegNet/EfficientNet, 2 Lightweight)
 CROSS_FAMILY_TRAIN_BASE_IDS = frozenset([
     "resnet18-v1", "resnet50-v1",
     "densenet121", "densenet169",
     "mobilenet-v2", "mobilenet-v3-small",
     "squeezenet10", "squeezenet11",
     "googlenet", "shufflenet-v2",
+    # Official 24-model catalog IDs:
+    "resnet18-imagenet1k-v1", "resnet50-imagenet1k-v2",
+    "densenet121-imagenet1k-v1", "densenet169-imagenet1k-v1",
+    "mobilenet-v2-imagenet1k-v2", "mobilenet-v3-small-imagenet1k-v1",
+    "shufflenet-v2-x05-imagenet1k-v1", "shufflenet-v2-x10-imagenet1k-v1",
+    "regnet-y-400mf-imagenet1k-v2", "efficientnet-b0-imagenet1k-v1",
 ])
 
 # 3 Held-Out ResNets (Homogeneous Dev)
 HOMO_HELD_OUT_IDS = frozenset([
     "resnext50-v2", "resnext101-v1", "wide-resnet101-v1",
+    "resnext50-32x4d-imagenet1k-v2",
 ])
 
 # Regime A Exp 1: Dev-Mixed (3 Homo ResNets + 5 Unseen Diverse = 8 Base Models / 24 Artifacts)
 MIXED_DEV_IDS = frozenset([
     "resnext50-v2", "resnext101-v1", "wide-resnet101-v1",
     "squeezenet10", "mobilenet-v3-small", "mobilenet-v2", "densenet121", "googlenet",
+    "resnext50-32x4d-imagenet1k-v2", "squeezenet10-imagenet1k-v1", "vgg11-bn-imagenet1k-v1",
 ])
 
 # Regime A Exp 2: Dev-ZeroShot-Small (4 Distinct Unseen Architectures / 12 Artifacts)
 ZEROSHOT_SMALL_IDS = frozenset([
     "squeezenet11", "shufflenet-v2", "efficientnet-b0", "densenet169",
+    "vgg11-bn-imagenet1k-v1", "vgg13-bn-imagenet1k-v1", "convnext-tiny-imagenet1k-v1",
 ])
 
-# Regime A Exp 3: Dev-ZeroShot-Large (All 9 Diverse Unseen Architectures / 27 Artifacts)
+# Regime A Exp 3: Dev-ZeroShot-Large (All Diverse Unseen Architectures)
 ZEROSHOT_LARGE_IDS = frozenset([
     "squeezenet10", "squeezenet11", "mobilenet-v3-small", "shufflenet-v2",
     "mobilenet-v2", "efficientnet-b0", "densenet121", "densenet169", "googlenet",
+    "squeezenet10-imagenet1k-v1", "vgg11-bn-imagenet1k-v1", "vgg13-bn-imagenet1k-v1",
+    "convnext-tiny-imagenet1k-v1", "convnext-small-imagenet1k-v1",
 ])
 
-# Regime B Held-Out Zero-Shot Test Sets (10 Unseen ResNets + 1 Unseen EfficientNet)
+# Regime B Held-Out Zero-Shot Test Sets (Unseen ResNets + Diverse Models)
 CROSS_HELD_OUT_RESNET_IDS = frozenset([
     "resnet34-v1", "resnet101-v1", "resnet101-v2", "resnet152-v1", "resnet152-v2",
     "resnext50-v1", "resnext50-v2", "resnext101-v1", "wide-resnet50-v1", "wide-resnet101-v1",
+    "resnet34-imagenet1k-v1", "resnext50-32x4d-imagenet1k-v2", "densenet201-imagenet1k-v1",
 ])
 CROSS_HELD_OUT_DIVERSE_IDS = frozenset([
     "efficientnet-b0",
+    "efficientnet-b1-imagenet1k-v2", "efficientnet-b2-imagenet1k-v1",
+    "mnasnet10-imagenet1k-v1", "regnet-x-400mf-imagenet1k-v2", "regnet-y-800mf-imagenet1k-v2",
+    "convnext-tiny-imagenet1k-v1", "convnext-small-imagenet1k-v1",
 ])
 
 
@@ -281,62 +299,41 @@ def make_triplet_indices_v5(
 
 
 def mine_semi_hard_triplets(
+    model: OSLEmbeddingNet,
     items: list[dict],
-    current_embeddings: np.ndarray,
+    triplets: list[tuple[int, int, int]],
     margin: float = 1.0,
-    top_k_cross: int = 2,
+    device: torch.device | str = "cpu",
 ) -> list[tuple[int, int, int]]:
-    """Semi-hard mining that preserves 100% of same-base counterfactual triplets.
+    """Keep all counterfactual pairs while prioritizing semi-hard cross-family positives."""
+    model.eval()
+    dev = torch.device(device) if isinstance(device, str) else device
+    with torch.no_grad():
+        all_imgs = torch.stack([it["image"] for it in items]).to(dev)
+        emb = model(all_imgs)
 
-    Preserves same-base counterfactual negatives (clean_M <-> stego_M) permanently,
-    and adds semi-hard cross-base negatives where:
-        d(a,p)^2 < d(a,n)^2 < d(a,p)^2 + margin
-    """
-    labels = [item["label"] for item in items]
-    families = [item.get("architecture_family", "unknown") for item in items]
-    bases = [item.get("base_checkpoint_id", "unknown") for item in items]
+    semi_hard = []
+    for a, p, n in triplets:
+        d_ap = 1.0 - torch.dot(emb[a], emb[p]).item()
+        d_an = 1.0 - torch.dot(emb[a], emb[n]).item()
+        if d_an < d_ap + margin:
+            semi_hard.append((a, p, n))
 
-    triplets: list[tuple[int, int, int]] = []
+    # Blend 50% semi-hard triplets with 50% full balanced counterfactual triplets
+    # so the network never forgets already-separated base architectures!
+    if len(semi_hard) >= len(triplets) // 4:
+        n_half = len(triplets) // 2
+        return semi_hard[:n_half] + triplets[: len(triplets) - len(semi_hard[:n_half])]
+    return triplets
 
-    for label in (0, 1):
-        same_class = [i for i, l in enumerate(labels) if l == label]
-        diff_class = [i for i, l in enumerate(labels) if l != label]
-
-        for anchor in same_class:
-            positives = [p for p in same_class if p != anchor and families[p] != families[anchor]]
-            if not positives:
-                positives = [p for p in same_class if p != anchor]
-            if not positives:
-                continue
-
-            for pos in positives:
-                # 1. Always keep same-base counterfactual negatives
-                same_base_negs = [n for n in diff_class if bases[n] == bases[anchor]]
-                for neg in same_base_negs:
-                    triplets.append((anchor, pos, neg))
-
-                # 2. Semi-hard cross-base negatives
-                d_ap_sq = float(np.sum((current_embeddings[anchor] - current_embeddings[pos]) ** 2))
-                cross_negs = [n for n in diff_class if bases[n] != bases[anchor]]
-                if cross_negs:
-                    d_an_sq = [(n, float(np.sum((current_embeddings[anchor] - current_embeddings[n]) ** 2))) for n in cross_negs]
-                    # Prefer semi-hard: d_ap_sq < d_an_sq < d_ap_sq + margin
-                    semi_hard = [n for n, d in sorted(d_an_sq, key=lambda x: x[1]) if d_ap_sq < d < d_ap_sq + margin]
-                    if not semi_hard:
-                        # Fallback to moderate negatives (avoid rank-0 outlier collapse)
-                        sorted_all = [n for n, _ in sorted(d_an_sq, key=lambda x: x[1])]
-                        semi_hard = sorted_all[1:1 + top_k_cross] or sorted_all[:top_k_cross]
-                    for neg in semi_hard[:top_k_cross]:
-                        triplets.append((anchor, pos, neg))
-
-    return list(dict.fromkeys(triplets))
 
 
 def triplet_loss(anchor: torch.Tensor, positive: torch.Tensor, negative: torch.Tensor, margin: float = 1.0) -> torch.Tensor:
-    """Smooth Softplus Triplet Loss — avoids early gradient collapse to zero."""
+    """Smooth Softplus Triplet Loss compatible with unit-test contract."""
     d_ap = (anchor - positive).square().sum(dim=-1)
     d_an = (anchor - negative).square().sum(dim=-1)
-    return torch.nn.functional.softplus(d_ap - d_an + margin).mean()
+    beta = 5.0
+    return torch.nn.functional.softplus(beta * (d_ap - d_an + margin)).mean() / beta
 
 
 def embeddings(model: OSLEmbeddingNet, items: list[dict], device: str) -> np.ndarray:
@@ -528,9 +525,11 @@ def train_episode(
     # V5: use counterfactual cross-family triplet mining by default
     if use_v5_triplets:
         triplets = make_triplet_indices_v5(support, cross_family=cross_family)
+        initial_triplets = list(triplets)
         print(f"[V5 TRIPLETS] Generated {len(triplets)} counterfactual cross-family triplets")
     else:
         triplets = make_triplet_indices(support, cross_family=cross_family)
+        initial_triplets = list(triplets)
         print(f"[V4 TRIPLETS] Generated {len(triplets)} legacy triplets")
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
@@ -546,27 +545,23 @@ def train_episode(
         for epoch in range(1, epochs + 1):
             model.train()
             rng.shuffle(triplets)
-            losses = []
-            for start in range(0, len(triplets), batch_size):
-                current = triplets[start:start + batch_size]
-                indices = torch.tensor(current, device=device)
-                batch = support_images.to(device)
-                optimizer.zero_grad()
-                all_embeddings = model(batch)
-                loss = triplet_loss(
-                    all_embeddings[indices[:, 0]],
-                    all_embeddings[indices[:, 1]],
-                    all_embeddings[indices[:, 2]],
-                    margin,
-                )
-                if not torch.isfinite(loss):
-                    raise FloatingPointError("non-finite triplet loss")
-                loss.backward()
-                optimizer.step()
-                losses.append(float(loss.detach().cpu()))
+            optimizer.zero_grad()
+            all_embeddings = model(support_images.to(device))
+            indices = torch.tensor(triplets, device=device)
+            anc = all_embeddings[indices[:, 0]]
+            pos = all_embeddings[indices[:, 1]]
+            neg = all_embeddings[indices[:, 2]]
+            loss = triplet_loss(anc, pos, neg, margin) + 0.25 * (
+                (1.0 - (anc * pos).sum(dim=-1)).mean()
+                + torch.nn.functional.relu(0.5 + (anc * neg).sum(dim=-1)).mean()
+            )
+            if not torch.isfinite(loss):
+                raise FloatingPointError("non-finite triplet loss")
+            loss.backward()
+            optimizer.step()
+            value = float(loss.detach().cpu())
 
             scheduler.step()
-            value = float(np.mean(losses))
             recent_losses = [row["triplet_loss"] for row in history[-5:]] + [value] if history else [value]
             trailing_mean = float(np.mean(recent_losses[-5:]))
 
@@ -610,21 +605,20 @@ def train_episode(
                 _best_epoch = epoch
                 _best_state = copy.deepcopy(model.state_dict())
 
-            if epoch % 10 == 0 or epoch == 1:
-                best_marker = " *** BEST ***" if effective_score >= _best_score else ""
-                print(
-                    f"epoch {epoch:03d}/{epochs}: loss={value:.6f}  "
-                    f"Dev-Mixed={m_mixed['best_ba']:.4f} (spec={dev_specificity:.2f})  "
-                    f"Dev-ZS-Small={m_zs_small['best_ba']:.4f}  "
-                    f"Dev-ZS-Large={m_zs_large['best_ba']:.4f}{best_marker}",
-                    flush=True,
-                )
+            best_marker = " *** BEST ***" if effective_score >= _best_score else ""
+            print(
+                f"epoch {epoch:03d}/{epochs}: loss={value:.6f}  "
+                f"Dev-Mixed={m_mixed['best_ba']:.4f} (spec={dev_specificity:.2f})  "
+                f"Dev-ZS-Small={m_zs_small['best_ba']:.4f}  "
+                f"Dev-ZS-Large={m_zs_large['best_ba']:.4f}{best_marker}",
+                flush=True,
+            )
 
             # V5: Semi-hard triplet re-mining every 10 epochs (after epoch 1)
             if use_v5_triplets and epoch % 10 == 0 and epoch > 1:
-                with torch.no_grad():
-                    current_embs = model(support_images.to(device)).cpu().numpy()
-                new_triplets = mine_semi_hard_triplets(support, current_embs, margin=margin, top_k_cross=2)
+                new_triplets = mine_semi_hard_triplets(
+                    model, support, initial_triplets, margin=margin, device=device
+                )
                 if new_triplets:
                     triplets = new_triplets
                     print(f"  [SEMI-HARD MINING] Re-mined {len(triplets)} triplets at epoch {epoch}")
@@ -951,7 +945,7 @@ def main() -> None:
     parser.add_argument("--margin", type=float, default=1.0)
     parser.add_argument("--emb-dim", type=int, default=128)
     parser.add_argument("--output-dir", required=True, type=Path)
-    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu"))
     parser.add_argument("--legacy-triplets", action="store_true",
                         help="Use v4 legacy triplet mining instead of v5 counterfactual mining")
     args = parser.parse_args()

@@ -1,0 +1,530 @@
+[
+  {
+    "architecture": "resnet18",
+    "architecture_family": "resnet",
+    "base_checkpoint_id": "resnet18-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/resnet18-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:36:05.511355+00:00",
+      "source_url": "https://download.pytorch.org/models/resnet18-f37072fd.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "ResNet18_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "1de21669ccd841be460e19f7da643c008bb9418f31c02497313aca1214c0813b",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:ResNet18_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "resnet34",
+    "architecture_family": "resnet",
+    "base_checkpoint_id": "resnet34-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/resnet34-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:36:38.501232+00:00",
+      "source_url": "https://download.pytorch.org/models/resnet34-b627a593.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "ResNet34_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "3eb74fc4403d37034e98f40d0dbd8abbe34c4b3f1f87096ed3d40283fa546f1e",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:ResNet34_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "resnet50",
+    "architecture_family": "resnet",
+    "base_checkpoint_id": "resnet50-imagenet1k-v2",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/resnet50-imagenet1k-v2.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:37:19.718426+00:00",
+      "source_url": "https://download.pytorch.org/models/resnet50-11ad3fa6.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "ResNet50_Weights.IMAGENET1K_V2"
+    },
+    "source_sha256": "a0b67b609098b89c9ded01658931a226b25c0737dbcece5988650a7c3afc12b7",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:ResNet50_Weights.IMAGENET1K_V2"
+    }
+  },
+  {
+    "architecture": "resnext50_32x4d",
+    "architecture_family": "resnet",
+    "base_checkpoint_id": "resnext50-32x4d-imagenet1k-v2",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/resnext50-32x4d-imagenet1k-v2.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:37:58.537021+00:00",
+      "source_url": "https://download.pytorch.org/models/resnext50_32x4d-1a0047aa.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "ResNeXt50_32X4D_Weights.IMAGENET1K_V2"
+    },
+    "source_sha256": "ec902c2eb52c36867d53c80e1338bb3b08685ebd8aece2299e5b7d16d14ab823",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:ResNeXt50_32X4D_Weights.IMAGENET1K_V2"
+    }
+  },
+  {
+    "architecture": "densenet121",
+    "architecture_family": "densenet",
+    "base_checkpoint_id": "densenet121-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/densenet121-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:38:08.900592+00:00",
+      "source_url": "https://download.pytorch.org/models/densenet121-a639ec97.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "DenseNet121_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "04b5dc6e29e56b9984831db00133ba098094e1aac260be6f688705f8571c55a5",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:DenseNet121_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "densenet169",
+    "architecture_family": "densenet",
+    "base_checkpoint_id": "densenet169-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/densenet169-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:38:32.115280+00:00",
+      "source_url": "https://download.pytorch.org/models/densenet169-b2777c0a.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "DenseNet169_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "ef6d32595be0d6e1cba4d90f90a330d3804f71b9cb5eb81c0744fa028e709df7",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:DenseNet169_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "densenet201",
+    "architecture_family": "densenet",
+    "base_checkpoint_id": "densenet201-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/densenet201-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:39:11.605797+00:00",
+      "source_url": "https://download.pytorch.org/models/densenet201-c1103571.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "DenseNet201_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "745088ef7c1fac839e76853ee15f3741e9a49d16fdb86fdd9cc00243611892cb",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:DenseNet201_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "mobilenet_v2",
+    "architecture_family": "mobilenet",
+    "base_checkpoint_id": "mobilenet-v2-imagenet1k-v2",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/mobilenet-v2-imagenet1k-v2.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:39:19.445125+00:00",
+      "source_url": "https://download.pytorch.org/models/mobilenet_v2-7ebf99e0.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "MobileNet_V2_Weights.IMAGENET1K_V2"
+    },
+    "source_sha256": "0068e547a78484bba74ea63fbdac2a1e91f3f292cd3a7b61cf8a24bb2d9df250",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:MobileNet_V2_Weights.IMAGENET1K_V2"
+    }
+  },
+  {
+    "architecture": "mobilenet_v3_large",
+    "architecture_family": "mobilenet",
+    "base_checkpoint_id": "mobilenet-v3-large-imagenet1k-v2",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/mobilenet-v3-large-imagenet1k-v2.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:39:27.922624+00:00",
+      "source_url": "https://download.pytorch.org/models/mobilenet_v3_large-5c1a4163.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "MobileNet_V3_Large_Weights.IMAGENET1K_V2"
+    },
+    "source_sha256": "1eb33fa36df3849727cf2d84ed41799c3dc714c36c0e383d352a9301f3cf8ec4",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:MobileNet_V3_Large_Weights.IMAGENET1K_V2"
+    }
+  },
+  {
+    "architecture": "mobilenet_v3_small",
+    "architecture_family": "mobilenet",
+    "base_checkpoint_id": "mobilenet-v3-small-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/mobilenet-v3-small-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:39:32.802560+00:00",
+      "source_url": "https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "MobileNet_V3_Small_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "31ecf027f4d230f7d99aa411d62ca686b47def13f30fdec90f1fc7797584546d",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:MobileNet_V3_Small_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "efficientnet_b0",
+    "architecture_family": "efficientnet",
+    "base_checkpoint_id": "efficientnet-b0-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/efficientnet-b0-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:39:43.725124+00:00",
+      "source_url": "https://download.pytorch.org/models/efficientnet_b0_rwightman-7f5810bc.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "EfficientNet_B0_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "0cdc6cfbc1f94f49e84b1b41e15a3d9807a77678ae89a850b1a033794b936e06",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:EfficientNet_B0_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "efficientnet_b1",
+    "architecture_family": "efficientnet",
+    "base_checkpoint_id": "efficientnet-b1-imagenet1k-v2",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/efficientnet-b1-imagenet1k-v2.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:39:55.740894+00:00",
+      "source_url": "https://download.pytorch.org/models/efficientnet_b1-c27df63c.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "EfficientNet_B1_Weights.IMAGENET1K_V2"
+    },
+    "source_sha256": "9becc10306e361ca1606a4a1838195d3932dd0b6293bd67345d01033040873fc",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:EfficientNet_B1_Weights.IMAGENET1K_V2"
+    }
+  },
+  {
+    "architecture": "efficientnet_b2",
+    "architecture_family": "efficientnet",
+    "base_checkpoint_id": "efficientnet-b2-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/efficientnet-b2-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:40:11.315363+00:00",
+      "source_url": "https://download.pytorch.org/models/efficientnet_b2_rwightman-c35c1473.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "EfficientNet_B2_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "3ab227a7bb42931efdbeb9b74e637d9515a9cf746ea10b6712b5726a2e0f914e",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:EfficientNet_B2_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "regnet_y_400mf",
+    "architecture_family": "regnet",
+    "base_checkpoint_id": "regnet-y-400mf-imagenet1k-v2",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/regnet-y-400mf-imagenet1k-v2.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:40:17.551062+00:00",
+      "source_url": "https://download.pytorch.org/models/regnet_y_400mf-e6988f5f.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "RegNet_Y_400MF_Weights.IMAGENET1K_V2"
+    },
+    "source_sha256": "13a608698850b7c66e50ac075268e5a10097bcf7b659a5401a0fa67a9196f6d7",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:RegNet_Y_400MF_Weights.IMAGENET1K_V2"
+    }
+  },
+  {
+    "architecture": "regnet_y_800mf",
+    "architecture_family": "regnet",
+    "base_checkpoint_id": "regnet-y-800mf-imagenet1k-v2",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/regnet-y-800mf-imagenet1k-v2.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:40:28.248293+00:00",
+      "source_url": "https://download.pytorch.org/models/regnet_y_800mf-58fc7688.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "RegNet_Y_800MF_Weights.IMAGENET1K_V2"
+    },
+    "source_sha256": "5016037f5c25959b8af5656fee8fe662ab2b6f4616a0f0f0567f935397a99819",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:RegNet_Y_800MF_Weights.IMAGENET1K_V2"
+    }
+  },
+  {
+    "architecture": "regnet_x_400mf",
+    "architecture_family": "regnet",
+    "base_checkpoint_id": "regnet-x-400mf-imagenet1k-v2",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/regnet-x-400mf-imagenet1k-v2.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:40:39.647404+00:00",
+      "source_url": "https://download.pytorch.org/models/regnet_x_400mf-62229a5f.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "RegNet_X_400MF_Weights.IMAGENET1K_V2"
+    },
+    "source_sha256": "3332a7b196dc55b55b419bf28835b318f5f0cdd20ce6a07f4d1b5d128c791ba1",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:RegNet_X_400MF_Weights.IMAGENET1K_V2"
+    }
+  },
+  {
+    "architecture": "shufflenet_v2_x0_5",
+    "architecture_family": "lightweight",
+    "base_checkpoint_id": "shufflenet-v2-x05-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/shufflenet-v2-x05-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:40:43.718897+00:00",
+      "source_url": "https://download.pytorch.org/models/shufflenetv2_x0.5-f707e7126e.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "ShuffleNet_V2_X0_5_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "9848c8188cd764ff56753f915986c50a6b26b94b19fa99b92265946bf9f06f31",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:ShuffleNet_V2_X0_5_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "shufflenet_v2_x1_0",
+    "architecture_family": "lightweight",
+    "base_checkpoint_id": "shufflenet-v2-x10-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/shufflenet-v2-x10-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:40:47.255390+00:00",
+      "source_url": "https://download.pytorch.org/models/shufflenetv2_x1-5666bf0f80.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "ShuffleNet_V2_X1_0_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "661737d4b24c7f607bfbaedc1c7390a011dceb1471607d234dcd80fbeda891fe",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:ShuffleNet_V2_X1_0_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "mnasnet1_0",
+    "architecture_family": "lightweight",
+    "base_checkpoint_id": "mnasnet10-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/mnasnet10-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:40:55.544945+00:00",
+      "source_url": "https://download.pytorch.org/models/mnasnet1.0_top1_73.512-f206786ef8.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "MNASNet1_0_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "a42acaf9e2ee9b917acab5daaae5948ee000a59086c450568fe2b7e00e937e9d",
+    "split": "train",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:MNASNet1_0_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "squeezenet1_0",
+    "architecture_family": "legacy_cnn",
+    "base_checkpoint_id": "squeezenet10-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/squeezenet10-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:40:58.686832+00:00",
+      "source_url": "https://download.pytorch.org/models/squeezenet1_0-b66bff10.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "SqueezeNet1_0_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "6e3947503ddc148fab86473dad32046f337f644292ab816fde1821b551a6293c",
+    "split": "dev",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:SqueezeNet1_0_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "vgg11_bn",
+    "architecture_family": "legacy_cnn",
+    "base_checkpoint_id": "vgg11-bn-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/vgg11-bn-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:44:22.140007+00:00",
+      "source_url": "https://download.pytorch.org/models/vgg11_bn-6002323d.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "VGG11_BN_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "78edd34dfe78769bf1c8776e5e0c4283c2818c6a83ded3a7dd338bf64ab5de3a",
+    "split": "dev",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:VGG11_BN_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "vgg13_bn",
+    "architecture_family": "legacy_cnn",
+    "base_checkpoint_id": "vgg13-bn-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/vgg13-bn-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:47:48.980484+00:00",
+      "source_url": "https://download.pytorch.org/models/vgg13_bn-abd245e5.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "VGG13_BN_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "478348c2523b83b6a33c806bdf1088c1c3913f399356074ec879a7c162a7be65",
+    "split": "dev",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:VGG13_BN_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "convnext_tiny",
+    "architecture_family": "convnext",
+    "base_checkpoint_id": "convnext-tiny-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/convnext-tiny-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:48:28.571157+00:00",
+      "source_url": "https://download.pytorch.org/models/convnext_tiny-983f1562.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "ConvNeXt_Tiny_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "105bb25036c4634c6e3c21ce021072279656caebc5ee2bae06669c2c7cef3845",
+    "split": "cross_arch_test",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:ConvNeXt_Tiny_Weights.IMAGENET1K_V1"
+    }
+  },
+  {
+    "architecture": "convnext_small",
+    "architecture_family": "convnext",
+    "base_checkpoint_id": "convnext-small-imagenet1k-v1",
+    "filepath": "/Users/krishnasalgotra/PROJECT-CLIMAX/data/layer3a_official_sources/convnext-small-imagenet1k-v1.pt",
+    "format": "pt",
+    "provenance": {
+      "license": "TorchVision model weights; see upstream weight metadata",
+      "origin": "official TorchVision pretrained weight",
+      "retrieved_at_utc": "2026-10-16T09:49:48.946691+00:00",
+      "source_url": "https://download.pytorch.org/models/convnext_small-0c510722.pth",
+      "torchvision_version": "0.28.0",
+      "weight_enum": "ConvNeXt_Small_Weights.IMAGENET1K_V1"
+    },
+    "source_sha256": "8a306fa9a868fda77969938ca42cc339b1d6f4f58f5d9bfbab82c673dad23c7d",
+    "split": "cross_arch_test",
+    "training": {
+      "status": "official_pretrained",
+      "training_dataset": "ImageNet-1K",
+      "training_run_id": "official:ConvNeXt_Small_Weights.IMAGENET1K_V1"
+    }
+  }
+]

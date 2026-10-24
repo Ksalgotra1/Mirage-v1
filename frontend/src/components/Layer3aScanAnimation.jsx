@@ -3,18 +3,21 @@ import * as THREE from "three";
 import { ShieldAlert, ShieldCheck, AlertTriangle, Play, RotateCcw, Lock, Terminal } from "lucide-react";
 
 /**
- * LAYER 3a — 512×512 GALOIS FIELD STEGANALYSIS & 5-SIGNAL FORENSIC ENGINE
- * -----------------------------------------------------------------------
+ * LAYER 3a — ADAPTIVE MULTI-RATE MANTISSA STEGANALYSIS ENGINE
+ * -----------------------------------------------------------
  * Same "Field Notes" case-file system as Layers 1 & 2: cream paper, warm
  * near-black ink, three flat accent colors, Fraunces for voice,
  * JetBrains Mono for every technical surface, the rubber-stamp verdict
  * as the one bold move. Three.js is scoped to the same two jobs: the
  * faint paper-grain field and the 3D stamp-slam.
  *
- * Surfaces specific to Layer 3a:
- *  - 512×512 Galois Field quadrant rasterization (Q0 MSB -> Q3 LSB across 4 256×256 planes)
- *  - Contrastive OSL embedding score against the calibrated margin τ = 0.072236
- *  - 3-zone forensic barometer (CLEAN < 0.40 <= SUSPICIOUS < 0.70 <= MALICIOUS)
+ * Surfaces specific to Layer 3a (v5 Dual 2D/1D Multi-Rate Engine):
+ *  - 512×512 Galois Field Fourpart rasterization (Q0 MSB → Q3 LSB across 4 256×256 planes) for x≥8-bit payloads
+ *  - Contrastive OSL embedding cosine centroid margin τ = 0.072236 (primary 2D path)
+ *  - 1D TVD step-cliff metric z_stat for mid-rate x=4 bit payloads
+ *  - O(M log M) FFT block autocorrelation z_per for micro-LSB x≤2 bit payloads
+ *  - IEEE 754 Banker's rounding b₀ parity bias compensation (100% clean specificity)
+ *  - 3-zone forensic barometer (CLEAN < 0.40 ≤ SUSPICIOUS < 0.70 ≤ MALICIOUS)
  *  - 5-signal forensic breakdown, gated strictly by band (Signals 1 & 3 at SUSPICIOUS; 1–5 at MALICIOUS)
  *  - Live Gemini threat dossier terminal
  */
@@ -878,21 +881,25 @@ export default function Layer3aScanAnimation() {
 
             <div className="l3a-ticker" aria-hidden="true">
                 <span className="l3a-ticker-track">
-                    512×512 GALOIS FIELD RASTERIZATION&nbsp;&nbsp;*&nbsp;&nbsp;CONTRASTIVE OSL EMBEDDING&nbsp;&nbsp;*&nbsp;&nbsp;{"\u03C4"} = 0.072236&nbsp;&nbsp;*&nbsp;&nbsp;5-SIGNAL FORENSIC BREAKDOWN&nbsp;&nbsp;*&nbsp;&nbsp;GEMINI THREAT DOSSIER&nbsp;&nbsp;*&nbsp;&nbsp;512×512 GALOIS FIELD RASTERIZATION&nbsp;&nbsp;*&nbsp;&nbsp;CONTRASTIVE OSL EMBEDDING&nbsp;&nbsp;*&nbsp;&nbsp;{"\u03C4"} = 0.072236&nbsp;&nbsp;*&nbsp;&nbsp;5-SIGNAL FORENSIC BREAKDOWN&nbsp;&nbsp;*&nbsp;&nbsp;
+                    GF-FOURPART RASTERIZATION&nbsp;&nbsp;*&nbsp;&nbsp;CONTRASTIVE OSL EMBEDDING&nbsp;&nbsp;*&nbsp;&nbsp;{"\u03C4"} = 0.072236&nbsp;&nbsp;*&nbsp;&nbsp;MULTI-RATE ENGINE (1–16 BITS)&nbsp;&nbsp;*&nbsp;&nbsp;TVD STEP-CLIFF&nbsp;&nbsp;*&nbsp;&nbsp;FFT AUTOCORRELATION&nbsp;&nbsp;*&nbsp;&nbsp;PARITY COMPENSATION&nbsp;&nbsp;*&nbsp;&nbsp;5-SIGNAL FORENSIC BREAKDOWN&nbsp;&nbsp;*&nbsp;&nbsp;GEMINI THREAT DOSSIER&nbsp;&nbsp;*&nbsp;&nbsp;GF-FOURPART RASTERIZATION&nbsp;&nbsp;*&nbsp;&nbsp;CONTRASTIVE OSL EMBEDDING&nbsp;&nbsp;*&nbsp;&nbsp;{"\u03C4"} = 0.072236&nbsp;&nbsp;*&nbsp;&nbsp;MULTI-RATE ENGINE (1–16 BITS)&nbsp;&nbsp;*&nbsp;&nbsp;
                 </span>
             </div>
 
             <div className="l3a-header">
                 <div>
-                    <Eyebrow tone="yellow">LAYER 03a — 512×512 STEGANALYSIS &amp; FORENSIC ENGINE</Eyebrow>
+                    <Eyebrow tone="yellow">LAYER 03a — ADAPTIVE MULTI-RATE MANTISSA ENGINE</Eyebrow>
                     <h2 className="l3a-title-serif">
                         Rasterizes the weights.<br /><em>Interrogates</em> the noise.
                     </h2>
                     <p className="l3a-sub">
-                        Flat float32 weights are rasterized into a unified 512{"\u00D7"}512 Galois Field
-                        4-quadrant plane (Q0 MSB {"\u2192"} Q3 LSB) and scored against a fixed contrastive
-                        margin ({"\u03C4"} = {TAU}). Crossing it opens a signal-gated forensic breakdown and a live
-                        Gemini incident dossier.
+                        Adaptive dual 2D/1D multi-rate mantissa engine covering
+                        {" x ∈ {1, 2, 4, 8, 16}"} LSB bits of float32 weights.
+                        The primary 2D path rasterizes weights into a 512{"\u00D7"}512 Galois Field
+                        Fourpart plane and scores against a calibrated contrastive margin ({"\u03C4"} = {TAU}).
+                        The auxiliary 1D path applies TVD step-cliff zₛₜₐₜ (x=4 bits)
+                        and FFT autocorrelation zₚₑʀ (x≤2 bits) with Banker’s rounding
+                        parity compensation. Crossing the threshold opens a signal-gated
+                        forensic breakdown and a live Gemini incident dossier.
                     </p>
                 </div>
                 <div className="l3a-meta">
@@ -904,7 +911,7 @@ export default function Layer3aScanAnimation() {
                 <div className="l3a-three-mount" ref={mountRef} />
 
                 <div className="l3a-panel">
-                    <div className="l3a-panel-label">512×512 GALOIS FIELD RASTERIZATION</div>
+                    <div className="l3a-panel-label">GF-FOURPART RASTERIZATION & MULTI-RATE MANTISSA ANALYSIS</div>
                     {s ? (
                         <div className="l3a-quad-grid">
                             {QUAD_META.map((q, i) => (

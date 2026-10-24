@@ -33,62 +33,82 @@ def model_to_gf_image(
 ) -> np.ndarray:
     """Convert model state_dict float32 weights into a 2x2 GF-Fourpart byte-plane image.
 
+    Uses unified PyTorch bilinear interpolation with antialias=True across ALL model
+    sizes to eliminate the 10,000-pixel skimage vs. torch downsampling discontinuity.
+
     Args:
         state_dict: PyTorch state dictionary (str -> Tensor).
-        imsize:     Output spatial resolution (default: 512).
+        imsize:     Output spatial resolution (default: GF_IMAGE_SIZE).
 
     Returns:
         uint8 numpy array of shape (imsize, imsize).
     """
-    try:
-        from skimage.transform import resize as skimage_resize
-    except ImportError as exc:
-        raise RuntimeError("model_to_gf_image requires scikit-image; install requirements.txt") from exc
-
-    # Collect and flatten ALL float32 parameters (matches paper's extract_weights)
     parts = []
     for tensor in state_dict.values():
         if isinstance(tensor, torch.Tensor) and tensor.dtype == torch.float32:
             parts.append(tensor.detach().cpu().numpy().astype("<f4").flatten())
     if not parts:
         raise ValueError("state_dict contains no float32 tensors")
-    flat = np.concatenate(parts)  # shape: (N,)
+    flat = np.concatenate(parts)
 
-    # Build the GF-Fourpart byte-plane image
-    # Each float32 contributes 4 bytes; flip to MSB-first order (sign+exp first)
     n_weights = len(flat)
     closest_sq = int(np.ceil(np.sqrt(n_weights)) ** 2)
     sqrt_sq = int(np.sqrt(closest_sq))
 
-    # Pad to nearest square, reshape to (n_weights_padded, 4) byte planes
     padded = np.pad(flat, (0, closest_sq - n_weights), mode="constant")
-    # view as uint8: little-endian → index 0 = LSB; flip → index 0 = MSB
-    byte_planes = padded.view(np.uint8).reshape(closest_sq, 4)[:, ::-1]  # (N_sq, 4) MSB→LSB
+    byte_planes = padded.view(np.uint8).reshape(closest_sq, 4)[:, ::-1]  # (N_sq, 4) MSB->LSB
 
-    # Each of the 4 byte channels becomes a sqrt_sq×sqrt_sq tile
-    # Tile layout: [[Q0, Q1], [Q2, Q3]] → final (2*sqrt_sq, 2*sqrt_sq)
     tiles = [byte_planes[:, ch].reshape(sqrt_sq, sqrt_sq) for ch in range(4)]
-    image_arr = np.block([[tiles[0], tiles[1]], [tiles[2], tiles[3]]])  # uint8, big
+    image_arr = np.block([[tiles[0], tiles[1]], [tiles[2], tiles[3]]])
 
-    # Memory-safe resize: for very large models (e.g. VGG16 with 553M pixels),
-    # use PyTorch bilinear interpolation to avoid skimage float64 memory explosion.
-    if image_arr.shape[0] > 10000:
-        try:
-            t = torch.from_numpy(image_arr).unsqueeze(0).unsqueeze(0).float()
-            resized_t = torch.nn.functional.interpolate(t, size=(imsize, imsize), mode="bilinear", align_corners=False)
-            return resized_t.squeeze().round().clamp(0, 255).byte().numpy()
-        except Exception:
-            pass
-
-    resized = skimage_resize(
-        image_arr,
-        output_shape=(imsize, imsize),
-        order=1,           # bilinear (default for skimage_resize)
-        preserve_range=True,
-        anti_aliasing=True,
-        clip=True,
+    t = torch.from_numpy(image_arr).unsqueeze(0).unsqueeze(0).float()
+    resized_t = torch.nn.functional.interpolate(
+        t, size=(imsize, imsize), mode="bilinear", align_corners=False, antialias=True
     )
-    return np.rint(resized).clip(0, 255).astype(np.uint8)
+    return resized_t.squeeze().round().clamp(0, 255).byte().numpy()
+
+
+def _build_xray_fill_payload(payload_seed: int, payload_len_bytes: int = 16384) -> np.ndarray:
+    """Build a deterministic, seed-specific 16 KB binary payload buffer for
+    Model X-Ray Algorithm 2 (X-LSB-Attack-Fill).
+
+    - Even seeds (payload_seed % 2 == 0): Structured executable/sentinel payload
+      (tests non-uniform byte distribution + 2D periodicity).
+    - Odd seeds (payload_seed % 2 == 1): Encrypted/compressed uniform byte stream in [0, 255]
+      with mean ~127.5 (forces the network to learn 2D periodic covariance and
+      row-variance collapse when first-order mean shift is zero).
+    """
+    rng = np.random.default_rng(int(payload_seed) & 0xFFFFFFFFFFFFFFFF)
+    sentinel = np.frombuffer(SENTINEL_BENIGN_PAYLOAD, dtype=np.uint8)
+
+    if int(payload_seed) % 2 == 1:
+        # High-entropy encrypted/compressed payload (Uniform [0, 255], mean ~127.5)
+        buf = rng.integers(0, 256, size=payload_len_bytes, dtype=np.uint8)
+        buf[: len(sentinel)] = sentinel
+        return buf
+
+    # Structured executable/rodata payload
+    n_hdr = 1024
+    hdr_reps = (n_hdr // len(sentinel)) + 1
+    hdr = np.tile(sentinel, hdr_reps)[:n_hdr].copy()
+    seed_tag = rng.integers(32, 126, size=64, dtype=np.uint8)
+    hdr[64::128] = seed_tag[: len(hdr[64::128])]
+
+    n_body = payload_len_bytes - n_hdr
+    n_blocks = n_body // 16
+    palette = np.concatenate([
+        np.arange(0, 160, dtype=np.uint8),
+        np.arange(32, 128, dtype=np.uint8),
+        np.arange(192, 240, dtype=np.uint8),
+    ])
+    blocks = rng.choice(palette, size=(n_blocks, 16), replace=True)
+    blocks[:, 0] = rng.choice(np.array([0x48, 0x55, 0x89, 0x8B, 0xE8, 0xFF, 0x0F, 0x31], dtype=np.uint8), size=n_blocks)
+    blocks[:, 4] = blocks[:, 0] ^ np.uint8((payload_seed & 0x3F) + 0x11)
+    blocks[:, 8] = (blocks[:, 2] >> 1) + np.uint8(0x20)
+    blocks[:, 12] = np.uint8(0x00)
+
+    body = blocks.reshape(-1)
+    return np.concatenate([hdr, body]).astype(np.uint8)
 
 
 def inject_model_xlsb(
@@ -96,32 +116,34 @@ def inject_model_xlsb(
     x_bits: int,
     payload_seed: int,
 ) -> dict:
-    """Apply X-LSB attack to ALL float32 parameters in a state_dict.
+    """Apply Model X-Ray Algorithm 2 (X-LSB-Attack-Fill) across all float32 parameters.
 
-    This is the whole-model injection used by the v3 corpus builder.
-    Unlike the per-tensor inject_xlsb, this derives one unified seed per model
-    to match the ModelXRay paper's X-LSB-Attack-Fill on the entire weight vector.
-
-    Args:
-        state_dict:   PyTorch state dictionary.
-        x_bits:       Number of LSB mantissa bits to overwrite per weight.
-        payload_seed: RNG seed for the random payload.
-
-    Returns:
-        New state dict with all float32 tensors attacked, non-float32 tensors unchanged.
+    Constructs a deterministic 16 KB seed-keyed payload m(payload_seed) and tiles it
+    continuously across every float32 weight's bottom x_bits in state_dict.
     """
-    import hashlib
+    payload_buf = _build_xray_fill_payload(payload_seed, payload_len_bytes=16384)
+    payload_bits = np.unpackbits(payload_buf)
+    n_payload_bits = len(payload_bits)
 
+    powers = (1 << np.arange(x_bits - 1, -1, -1, dtype=np.uint32))
+    clear_mask = np.uint32(((1 << x_bits) - 1) ^ 0xFFFFFFFF)
 
     result = {}
+    bit_cursor = 0
     for name, tensor in state_dict.items():
         if isinstance(tensor, torch.Tensor) and tensor.dtype == torch.float32:
-            result[name] = inject_xlsb(tensor, x_bits, payload_type="random",
-                                        seed=int.from_bytes(
-                                            hashlib.sha256(
-                                                f"{payload_seed}|{name}".encode()
-                                            ).digest()[:8], "big"
-                                        ))
+            num_weights = tensor.numel()
+            total_bits = num_weights * x_bits
+            idx = (np.arange(total_bits, dtype=np.int64) + bit_cursor) % n_payload_bits
+            bit_cursor = (bit_cursor + total_bits) % n_payload_bits
+
+            bits_per_weight = payload_bits[idx].reshape(num_weights, x_bits)
+            payload_u32 = (bits_per_weight * powers).sum(axis=1).astype(np.uint32)
+
+            weights_u32 = tensor.detach().cpu().numpy().astype(np.float32).flatten().view(np.uint32).copy()
+            stego_u32 = (weights_u32 & clear_mask) | payload_u32
+            stego_f32 = stego_u32.view(np.float32).reshape(tensor.shape)
+            result[name] = torch.from_numpy(stego_f32)
         else:
             result[name] = tensor
     return result
