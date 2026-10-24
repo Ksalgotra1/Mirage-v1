@@ -14,7 +14,7 @@
       "metric_value": 0.91
     },
     "provenance": {
-      "origin": "PROJECT-CLIMAX reproducible training run",
+      "origin": "MIRAGE reproducible training run",
       "license": "project-generated",
       "source_url": null
     }

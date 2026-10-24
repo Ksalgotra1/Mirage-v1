@@ -58,7 +58,7 @@ def main() -> None:
     colors = ["#9B8AFB", "#38D9A9", "#FFB86B", "#7DCFFF", "#FF7AB6", "#C3E88D"]
 
     fig, axes = plt.subplots(1, 2, figsize=(15, 6), facecolor="#0A0A0B")
-    fig.suptitle("PROJECT-CLIMAX · Source Model Training", fontsize=19, fontweight="bold", color="#F4F1FF")
+    fig.suptitle("MIRAGE · Source Model Training", fontsize=19, fontweight="bold", color="#F4F1FF")
     for index, (seed, values) in enumerate(sorted(series.items())):
         x = [row["epoch"] for row in values]
         axes[0].plot(x, [row["loss"] for row in values], marker="o", linewidth=2.5, markersize=4, color=colors[index % len(colors)], label=seed)

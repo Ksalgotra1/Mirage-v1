@@ -1,16 +1,49 @@
-
+import json
+import math
+import os
+from pathlib import Path
 from typing import Dict, Any, Optional
 
+_WEIGHTS_PATH = Path(__file__).resolve().parent.parent / "detector" / "models" / "meta_fusion_weights.json"
+
 class FusionEngine:
-    """Ensemble Fusion Engine that combines scores from all four detection layers:
+    """Ensemble Meta-Fusion Engine that combines threat signals from all 4 inspection layers
+    using a trained Wolpert Stacking Logistic Meta-Learner with Platt probability calibration:
 
-    - Layer 1: Rule-based opcode bouncer (modelscan)
-    - Layer 2: Statistical opcode classifier (SafePickle-inspired)
-    - Layer 3a: GF-transform LSB payload detector
-    - Layer 3b: Weight-distribution backdoor detector
-
-    Applies format-aware weight adjustment based on file format coverage.
+    - Layer 1: Rule-based opcode AST bouncer (modelscan)
+    - Layer 2: Statistical opcode classifier (SafePickle-inspired XGBoost)
+    - Layer 3a: GF-transform LSB payload detector (OSLEmbeddingNet)
+    - Layer 3b: Weight-distribution spectral backdoor detector
     """
+
+    def __init__(self):
+        self.meta_params = self._load_meta_weights()
+
+    def _load_meta_weights(self) -> Dict[str, Any]:
+        """Load empirical parameters trained via maximum likelihood estimation."""
+        if _WEIGHTS_PATH.exists():
+            try:
+                with open(_WEIGHTS_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data.get("coefficients"), list) and "feature_names" in data:
+                        data["coefficients"] = dict(zip(data["feature_names"], data["coefficients"]))
+                    return data
+            except Exception:
+                pass
+        # Fallback calibrated defaults
+        return {
+            "intercept": 0.1350,
+            "coefficients": {
+                "L1_Verdict": 1.1185,
+                "L2_Gated_Prob": 3.5492,
+                "L3a_Margin_Delta": 0.5702,
+                "L3a_Conviction": 0.4600,
+                "L3b_Score": 0.0000,
+                "L1_L2_Synergy": 1.0881,
+                "Fmt_Pickle": -2.5186,
+                "Fmt_Tensor": 0.2386
+            }
+        }
 
     def fuse(
         self,
@@ -21,62 +54,85 @@ class FusionEngine:
         l3b_res: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         ext = format_ext.lower().lstrip(".")
+        coef = self.meta_params.get("coefficients", {})
+        intercept = float(self.meta_params.get("intercept", 0.1350))
 
-        # Base default weights
-        w_l1, w_l2, w_l3a, w_l3b = 0.20, 0.30, 0.30, 0.20
+        # Raw layer signal extraction
+        s_l1 = 1.0 if l1_res.get("verdict") else 0.0
+        p_l2 = float(l2_res.get("probability", 1.0 if l2_res.get("verdict") else 0.0))
+        
+        tau = float((l3a_res or {}).get("threshold", 0.072236))
+        cal_margin = float((l3a_res or {}).get("calibrated_distance", 0.0))
+        l3a_margin_delta = (cal_margin - tau) / (tau if tau > 0 else 1.0)
+        l3a_v = 1.0 if (l3a_res or {}).get("verdict") else 0.0
+        s_l3b = float((l3b_res or {}).get("score", 0.0))
 
-        # Adjust weights based on format coverage
+        # Format & feature gating
+        is_pickle_fmt = 1.0 if ext in ("pkl", "pt", "pth", "bin") else 0.0
+        is_tensor_fmt = 1.0 if ext in ("safetensors", "pt", "pth", "h5", "hdf5") else 0.0
+        
+        l3a_note = str((l3a_res or {}).get("coverage_note") or "")
+        has_float32 = 1.0 if ("No float32" not in l3a_note and "not support" not in l3a_note) else 0.0
+
+        l2_gated = p_l2 * is_pickle_fmt
+        l3a_gated = l3a_margin_delta * has_float32
+        l1_l2_joint = s_l1 * l2_gated
+
+        # Logit dot product z = beta_0 + sum(beta_i * x_i)
+        z = (
+            intercept +
+            coef.get("L1_Verdict", 1.1185) * s_l1 +
+            coef.get("L2_Gated_Prob", 3.5492) * l2_gated +
+            coef.get("L3a_Margin_Delta", 0.5702) * l3a_gated +
+            coef.get("L3a_Conviction", 0.4600) * l3a_v +
+            coef.get("L3b_Score", 0.0000) * s_l3b +
+            coef.get("L1_L2_Synergy", 1.0881) * l1_l2_joint +
+            coef.get("Fmt_Pickle", -2.5186) * is_pickle_fmt +
+            coef.get("Fmt_Tensor", 0.2386) * is_tensor_fmt
+        )
+
+        # Calibrated Bayesian posterior probability P(Malicious | x) = sigma(z)
+        try:
+            prob = 1.0 / (1.0 + math.exp(-z))
+        except OverflowError:
+            prob = 0.0 if z < 0 else 1.0
+
+        # Deterministic Safety Anchors (Ground Truth Certainty)
+        if s_l1 > 0:
+            prob = max(prob, 0.999)
+        if l3a_v > 0:
+            prob = max(prob, 0.850)
+
+        # Base format-coverage weights (for backwards compatibility / inspection)
         if ext == "safetensors":
             w_l1, w_l2, w_l3a, w_l3b = 0.0, 0.0, 0.60, 0.40
         elif ext == "h5":
             w_l1, w_l2, w_l3a, w_l3b = 0.30, 0.0, 0.40, 0.30
-        elif ext in ("pkl", "pt", "pth"):
+        elif ext in ("pkl", "pt", "pth", "bin"):
             w_l1, w_l2, w_l3a, w_l3b = 0.20, 0.30, 0.30, 0.20
-
-        # Extract normalized scores (0.0 to 1.0)
-        s_l1 = 1.0 if l1_res.get("verdict") else 0.0
-        s_l2 = float(l2_res.get("probability", 1.0 if l2_res.get("verdict") else 0.0))
-
-        # Layer 3a score
-        if l3a_res and "score" in l3a_res:
-            s_l3a = float(l3a_res["score"])
-        elif l3a_res and "verdict" in l3a_res:
-            s_l3a = 1.0 if l3a_res["verdict"] else 0.0
         else:
-            s_l3a = 0.0
+            w_l1, w_l2, w_l3a, w_l3b = 0.25, 0.25, 0.25, 0.25
 
-        # Layer 3b score
-        if l3b_res and "score" in l3b_res:
-            s_l3b = float(l3b_res["score"])
-        elif l3b_res and "verdict" in l3b_res:
-            s_l3b = 1.0 if l3b_res["verdict"] else 0.0
+        # Unified 3-Tier Classification
+        if prob >= 0.70:
+            verdict = "MALICIOUS"
+        elif prob >= 0.40:
+            verdict = "SUSPICIOUS"
         else:
-            s_l3b = 0.0
+            verdict = "BENIGN"
 
-        # Compute fused score
-        total_weight = w_l1 + w_l2 + w_l3a + w_l3b
-        if total_weight > 0:
-            fused_score = (w_l1 * s_l1 + w_l2 * s_l2 + w_l3a * s_l3a + w_l3b * s_l3b) / total_weight
-        else:
-            fused_score = 0.0
-
-        # Override: If any layer detects a confirmed threat, or fused score >= 0.5, mark as MALICIOUS
-        is_malicious = (
-            fused_score >= 0.5
-            or bool(l1_res.get("verdict", False))
-            or bool(l2_res.get("verdict", False))
-            or (l3a_res is not None and bool(l3a_res.get("verdict", False)))
-            or (l3b_res is not None and bool(l3b_res.get("verdict", False)))
-        )
-
-        # Layer 3a supplies calibrated bands when its bundle is available.
-        # Retain score thresholds for older/external detector responses.
+        # Forensic band preservation (honoring Layer 3a calibrated bands & legacy scores)
         supplied_band = (l3a_res or {}).get("forensic_band")
+        s_l3a_legacy = float((l3a_res or {}).get("score", 0.0))
         if supplied_band in ("clean", "suspicious", "malicious"):
             forensic_band = supplied_band
-        elif s_l3a >= 0.70:
+        elif s_l3a_legacy >= 0.70:
             forensic_band = "malicious"
-        elif s_l3a >= 0.40:
+        elif s_l3a_legacy >= 0.40:
+            forensic_band = "suspicious"
+        elif prob >= 0.70:
+            forensic_band = "malicious"
+        elif prob >= 0.40:
             forensic_band = "suspicious"
         else:
             forensic_band = "clean"
@@ -85,9 +141,9 @@ class FusionEngine:
         if l1_res.get("verdict"):
             explanations.append("Layer 1: Rule-based dangerous callable detected")
         if l2_res.get("verdict"):
-            explanations.append(f"Layer 2: Opcode structural anomaly detected (prob={s_l2:.2f})")
+            explanations.append(f"Layer 2: Opcode structural anomaly detected (prob={p_l2:.2f})")
         if l3a_res and l3a_res.get("verdict"):
-            explanations.append("Layer 3a: GF LSB payload pattern detected")
+            explanations.append("Layer 3a: GF LSB steganographic payload detected")
         if l3b_res and l3b_res.get("verdict"):
             explanations.append("Layer 3b: Weight distribution anomaly detected")
 
@@ -95,8 +151,8 @@ class FusionEngine:
             explanations.append("All applicable layers clean")
 
         return {
-            "verdict": "MALICIOUS" if is_malicious else "BENIGN",
-            "score": round(float(fused_score), 4),
+            "verdict": verdict,
+            "score": round(float(prob), 4),
             "forensic_band": forensic_band,
             "weights_applied": {
                 "l1": round(w_l1, 2),
@@ -104,5 +160,13 @@ class FusionEngine:
                 "l3a": round(w_l3a, 2),
                 "l3b": round(w_l3b, 2),
             },
+            "meta_coefficients": {
+                "l1_coef": round(coef.get("L1_Verdict", 1.1185), 2),
+                "l2_coef": round(coef.get("L2_Gated_Prob", 3.5492), 2),
+                "l3a_coef": round(coef.get("L3a_Margin_Delta", 0.5702), 2),
+                "l3b_coef": round(coef.get("L3b_Score", 0.0000), 2),
+            },
             "explanation": " | ".join(explanations),
         }
+
+

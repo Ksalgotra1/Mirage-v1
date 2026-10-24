@@ -12,10 +12,10 @@ const Footer = () => {
                     <div className="md:col-span-5">
                         <div className="flex items-center gap-3">
                             <div className="flex h-11 w-11 items-center justify-center rounded-sm border-2 border-[#F2ECDC] bg-[#EFC23A] text-[#17130E]">
-                                <span className="font-mono text-lg font-extrabold leading-none">PX</span>
+                                <span className="font-mono text-lg font-extrabold leading-none">MR</span>
                             </div>
                             <div>
-                                <p className="font-serif text-2xl font-black tracking-tight text-[#F2ECDC]">PROJECT-CLIMAX</p>
+                                <p className="font-serif text-2xl font-black tracking-tight text-[#F2ECDC]">MIRAGE</p>
                                 <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#F2ECDC]/70">
                                     ADVANCED ML BACKDOOR & MALWARE DEFENSE
                                 </p>
@@ -92,7 +92,7 @@ const Footer = () => {
                 </div>
 
                 <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-[#F2ECDC]/15 pt-6 font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#F2ECDC]/60 md:flex-row md:items-center">
-                    <p>{`(c) ${currentYear} PROJECT-CLIMAX DEFENSE SYSTEM. ALL RIGHTS RESERVED.`}</p>
+                    <p>{`(c) ${currentYear} MIRAGE DEFENSE SYSTEM. ALL RIGHTS RESERVED.`}</p>
                     <p className="flex items-center gap-2">
                         <span>MODEL VULNERABILITY MITIGATION SUITE</span>
                     </p>

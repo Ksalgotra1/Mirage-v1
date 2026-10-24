@@ -99,12 +99,20 @@ def load_gf_image(filepath: str | Path) -> torch.Tensor:
     return torch.from_numpy(np.ascontiguousarray(arr.astype(np.uint8)))
 
 
-def items_for_records(records: list[dict], x_bits: int) -> list[dict]:
+def items_for_records(records: list[dict], x_bits_list: list[int]) -> list[dict]:
+    """Load items for all specified bit depths.
+
+    Args:
+        records: Manifest records.
+        x_bits_list: List of allowed LSB bit depths for stego samples (e.g. [4, 8]).
+    """
     items = []
     for record in records:
         attack = record["attack"]
-        if record["label"] == "stego" and int(attack.get("x_bits", -1)) != x_bits:
-            continue
+        if record["label"] == "stego":
+            record_bits = int(attack.get("x_bits", -1))
+            if record_bits not in x_bits_list:
+                continue
         items.append({
             "image": load_gf_image(record["filepath"]),
             "label": int(record["label"] == "stego"),
@@ -112,6 +120,7 @@ def items_for_records(records: list[dict], x_bits: int) -> list[dict]:
             "base_checkpoint_id": record["base_checkpoint_id"],
             "architecture": record.get("architecture", record["architecture_family"]),
             "architecture_family": record["architecture_family"],
+            "x_bits": int(attack.get("x_bits", 0)) if record["label"] == "stego" else 0,
         })
     return items
 
@@ -185,7 +194,7 @@ def select_scz_support(items: list[dict], architecture: str, per_class: int = 0,
 
 
 def make_triplet_indices(items: list[dict] | list[int], cross_family: bool = False) -> list[tuple[int, int, int]]:
-    """Build deterministic class-balanced triplets.
+    """Build deterministic class-balanced triplets (v4 legacy fallback).
 
     Integer labels remain supported for the lightweight regression contract;
     corpus training passes the richer item dictionaries.
@@ -215,6 +224,112 @@ def make_triplet_indices(items: list[dict] | list[int], cross_family: bool = Fal
             seen.add(t)
             deduped.append(t)
     return deduped
+
+
+def make_triplet_indices_v5(
+    items: list[dict],
+    cross_family: bool = True,
+) -> list[tuple[int, int, int]]:
+    """V5 counterfactual cross-family triplet mining.
+
+    Strategy:
+      1. For each clean anchor, positive = clean from DIFFERENT family,
+         negative = stego from SAME base model (if available) or any stego.
+      2. For each stego anchor, positive = stego from DIFFERENT family,
+         negative = clean from SAME base model (forces bit-level discrimination).
+      3. Same-base counterfactual triplets are always included (never deleted).
+    """
+    labels = [item["label"] for item in items]
+    families = [item.get("architecture_family", "unknown") for item in items]
+    bases = [item.get("base_checkpoint_id", "unknown") for item in items]
+
+    triplets: list[tuple[int, int, int]] = []
+
+    for label in (0, 1):
+        same_class = [i for i, l in enumerate(labels) if l == label]
+        diff_class = [i for i, l in enumerate(labels) if l != label]
+
+        for anchor in same_class:
+            # Positive: same class, DIFFERENT family (counterfactual)
+            cross_family_positives = [
+                p for p in same_class
+                if p != anchor and families[p] != families[anchor]
+            ]
+            # Fallback to same-family if no cross-family available
+            if not cross_family_positives:
+                cross_family_positives = [p for p in same_class if p != anchor]
+            if not cross_family_positives:
+                continue
+
+            for positive in cross_family_positives:
+                # Always add same-base counterfactual negatives (highest value)
+                same_base_negs = [
+                    n for n in diff_class if bases[n] == bases[anchor]
+                ]
+                for neg in same_base_negs:
+                    triplets.append((anchor, positive, neg))
+
+                # Add a few cross-base negatives for diversity
+                other_negs = [
+                    n for n in diff_class if bases[n] != bases[anchor]
+                ]
+                for neg in other_negs[:3]:
+                    triplets.append((anchor, positive, neg))
+
+    # Deduplicate while preserving order
+    return list(dict.fromkeys(triplets))
+
+
+def mine_semi_hard_triplets(
+    items: list[dict],
+    current_embeddings: np.ndarray,
+    margin: float = 1.0,
+    top_k_cross: int = 2,
+) -> list[tuple[int, int, int]]:
+    """Semi-hard mining that preserves 100% of same-base counterfactual triplets.
+
+    Preserves same-base counterfactual negatives (clean_M <-> stego_M) permanently,
+    and adds semi-hard cross-base negatives where:
+        d(a,p)^2 < d(a,n)^2 < d(a,p)^2 + margin
+    """
+    labels = [item["label"] for item in items]
+    families = [item.get("architecture_family", "unknown") for item in items]
+    bases = [item.get("base_checkpoint_id", "unknown") for item in items]
+
+    triplets: list[tuple[int, int, int]] = []
+
+    for label in (0, 1):
+        same_class = [i for i, l in enumerate(labels) if l == label]
+        diff_class = [i for i, l in enumerate(labels) if l != label]
+
+        for anchor in same_class:
+            positives = [p for p in same_class if p != anchor and families[p] != families[anchor]]
+            if not positives:
+                positives = [p for p in same_class if p != anchor]
+            if not positives:
+                continue
+
+            for pos in positives:
+                # 1. Always keep same-base counterfactual negatives
+                same_base_negs = [n for n in diff_class if bases[n] == bases[anchor]]
+                for neg in same_base_negs:
+                    triplets.append((anchor, pos, neg))
+
+                # 2. Semi-hard cross-base negatives
+                d_ap_sq = float(np.sum((current_embeddings[anchor] - current_embeddings[pos]) ** 2))
+                cross_negs = [n for n in diff_class if bases[n] != bases[anchor]]
+                if cross_negs:
+                    d_an_sq = [(n, float(np.sum((current_embeddings[anchor] - current_embeddings[n]) ** 2))) for n in cross_negs]
+                    # Prefer semi-hard: d_ap_sq < d_an_sq < d_ap_sq + margin
+                    semi_hard = [n for n, d in sorted(d_an_sq, key=lambda x: x[1]) if d_ap_sq < d < d_ap_sq + margin]
+                    if not semi_hard:
+                        # Fallback to moderate negatives (avoid rank-0 outlier collapse)
+                        sorted_all = [n for n, _ in sorted(d_an_sq, key=lambda x: x[1])]
+                        semi_hard = sorted_all[1:1 + top_k_cross] or sorted_all[:top_k_cross]
+                    for neg in semi_hard[:top_k_cross]:
+                        triplets.append((anchor, pos, neg))
+
+    return list(dict.fromkeys(triplets))
 
 
 def triplet_loss(anchor: torch.Tensor, positive: torch.Tensor, negative: torch.Tensor, margin: float = 1.0) -> torch.Tensor:
@@ -403,12 +518,20 @@ def train_episode(
     dev_mixed_items: list[dict] | None = None,
     dev_zs_small_items: list[dict] | None = None,
     dev_zs_large_items: list[dict] | None = None,
+    use_v5_triplets: bool = True,
 ) -> list[dict]:
     support_images = torch.stack([item["image"] for item in support])
     model.adapt_normalization(support_images)
     model.to(device)
     labels = np.array([item["label"] for item in support])
-    triplets = make_triplet_indices(support, cross_family=cross_family)
+
+    # V5: use counterfactual cross-family triplet mining by default
+    if use_v5_triplets:
+        triplets = make_triplet_indices_v5(support, cross_family=cross_family)
+        print(f"[V5 TRIPLETS] Generated {len(triplets)} counterfactual cross-family triplets")
+    else:
+        triplets = make_triplet_indices(support, cross_family=cross_family)
+        print(f"[V4 TRIPLETS] Generated {len(triplets)} legacy triplets")
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
@@ -468,26 +591,43 @@ def train_episode(
                 "dev_zs_large_ba": m_zs_large["best_ba"],
                 "dev_zs_large_centroid_ba": m_zs_large["centroid_ba"],
                 "dev_zs_large_1nn_ba": m_zs_large["1nn_ba"],
+                "dev_mixed_specificity": m_mixed.get("specificity", 0.0),
                 # Legacy compatibility key
                 "dev_ba": m_mixed["best_ba"],
             })
 
-            # Save checkpoint based on primary mixed & large performance
-            combined_score = 0.6 * m_mixed["best_ba"] + 0.4 * m_zs_large["best_ba"]
-            if combined_score > _best_score:
-                _best_score = combined_score
+            # Specificity-gated checkpoint selection (Patch 4):
+            # Penalize checkpoints with low clean specificity so false-positive models are never saved
+            dev_ba = 0.6 * m_mixed["best_ba"] + 0.4 * m_zs_large["best_ba"]
+            dev_specificity = m_mixed.get("specificity", 0.0)
+            if dev_specificity >= 0.75:
+                effective_score = dev_ba
+            else:
+                effective_score = dev_ba * 0.5 + dev_specificity * 0.5
+
+            if effective_score > _best_score:
+                _best_score = effective_score
                 _best_epoch = epoch
                 _best_state = copy.deepcopy(model.state_dict())
 
             if epoch % 10 == 0 or epoch == 1:
-                best_marker = " *** BEST ***" if combined_score >= _best_score else ""
+                best_marker = " *** BEST ***" if effective_score >= _best_score else ""
                 print(
                     f"epoch {epoch:03d}/{epochs}: loss={value:.6f}  "
-                    f"Dev-Mixed={m_mixed['best_ba']:.4f}  "
+                    f"Dev-Mixed={m_mixed['best_ba']:.4f} (spec={dev_specificity:.2f})  "
                     f"Dev-ZS-Small={m_zs_small['best_ba']:.4f}  "
                     f"Dev-ZS-Large={m_zs_large['best_ba']:.4f}{best_marker}",
                     flush=True,
                 )
+
+            # V5: Semi-hard triplet re-mining every 10 epochs (after epoch 1)
+            if use_v5_triplets and epoch % 10 == 0 and epoch > 1:
+                with torch.no_grad():
+                    current_embs = model(support_images.to(device)).cpu().numpy()
+                new_triplets = mine_semi_hard_triplets(support, current_embs, margin=margin, top_k_cross=2)
+                if new_triplets:
+                    triplets = new_triplets
+                    print(f"  [SEMI-HARD MINING] Re-mined {len(triplets)} triplets at epoch {epoch}")
 
             # Early stopping check: if loss hit minimum plateau and score hasn't improved for 25 epochs
             if epoch - _best_epoch >= 25 and value < 0.05:
@@ -800,20 +940,32 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--reference-architecture", default="resnet", type=str)
-    parser.add_argument("--regime", choices=["homogeneous", "cross_family"], default="homogeneous", help="Training regime")
+    parser.add_argument("--regime", choices=["homogeneous", "cross_family"], default="cross_family", help="Training regime (default: cross_family for v5)")
     parser.add_argument("--per-class", type=int, default=0)
-    parser.add_argument("--x-bits", type=int, default=8)
-    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--x-bits", type=str, default="4,8",
+                        help="Comma-separated list of LSB bit depths to train on (default: 4,8). "
+                             "WARNING: Do NOT include 1 or 2 on uint8-quantized GF images.")
+    parser.add_argument("--epochs", type=int, default=60)
     parser.add_argument("--batch-size", type=int, default=64)
-    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--margin", type=float, default=1.0)
     parser.add_argument("--emb-dim", type=int, default=128)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--legacy-triplets", action="store_true",
+                        help="Use v4 legacy triplet mining instead of v5 counterfactual mining")
     args = parser.parse_args()
 
+    # Parse comma-separated x-bits list
+    x_bits_list = [int(b.strip()) for b in args.x_bits.split(",")]
+    # Safety check: warn if low bit depths are included
+    for xb in x_bits_list:
+        if xb <= 2:
+            print(f"[WARNING] x_bits={xb} included! On uint8-quantized GF images, x≤2 produces "
+                  f"near-identical clean/stego images. This may degrade training. Consider removing.")
+
     records = load_manifest(args.manifest)
-    all_items = items_for_records(records, args.x_bits)
+    all_items = items_for_records(records, x_bits_list)
 
     if args.regime == "cross_family":
         print(f"\n[REGIME] Configuring Cross-Family Invariant Benchmark (5 Distinct Architectural Families)")
@@ -854,6 +1006,7 @@ def main() -> None:
         dev_mixed_items=dev_mixed_items,
         dev_zs_small_items=dev_zs_small_items,
         dev_zs_large_items=dev_zs_large_items,
+        use_v5_triplets=(not args.legacy_triplets),
     )
 
     support_emb = embeddings(model, support, args.device)
@@ -875,9 +1028,22 @@ def main() -> None:
     mean_train = support_emb.mean(axis=0, keepdims=True)
     sup_c = support_emb - mean_train
     sup_proc = sup_c / np.linalg.norm(sup_c, axis=1, keepdims=True).clip(1e-7)
+
+    # V5 Patch 4: Compute stego prototype from x_bits=8 anchors only
+    # (prevents low-bit samples from pulling the stego centroid inside the clean perimeter)
+    support_x_bits = np.array([s.get("x_bits", 8) for s in support])
+    stego_mask = support_lbl == 1
+    stego_x8_mask = stego_mask & (support_x_bits == 8)
+    # Fallback: if no x_bits=8 stego, use all stego (handles legacy manifests)
+    if stego_x8_mask.sum() == 0:
+        stego_x8_mask = stego_mask
+        print("[PROTO] No x_bits=8 stego found; using all stego for prototype computation.")
+    else:
+        print(f"[PROTO] Computing stego prototype from {stego_x8_mask.sum()} x_bits=8 anchors (excluding lower bit depths)")
+
     c0 = sup_proc[support_lbl == 0].mean(axis=0)
     c0 = c0 / max(np.linalg.norm(c0), 1e-7)
-    c1 = sup_proc[support_lbl == 1].mean(axis=0)
+    c1 = sup_proc[stego_x8_mask].mean(axis=0)
     c1 = c1 / max(np.linalg.norm(c1), 1e-7)
     s_sup = np.dot(sup_proc, c1) - np.dot(sup_proc, c0)
     calibrated_tau = find_calibrated_threshold(s_sup[support_lbl == 0], s_sup[support_lbl == 1])
@@ -915,9 +1081,11 @@ def main() -> None:
 
     # 3. Save Comprehensive Calibration JSON
     calib = {
-        "format_version": "layer3a_gf_fourpart_v1",
+        "format_version": "layer3a_gf_fourpart_v5",
+        "architecture_version": "v5_4ch_srnet_moment",
         "status": "completed",
         "threshold": float(calibrated_tau),
+        "imsize": 512,
         "insample_balanced_accuracy": float(insample_ba),
         "experiment_1_dev_mixed_ba": final_mixed_ba,
         "experiment_2_dev_zeroshot_small_ba": final_zs_small_ba,
@@ -932,7 +1100,8 @@ def main() -> None:
         "dev_centroid_balanced_accuracy": final_mixed_ba,
         "dev_1nn_balanced_accuracy": float(m_mixed["1nn_ba"]),
         "reference_architecture": args.reference_architecture,
-        "x_bits": args.x_bits,
+        "x_bits": x_bits_list,
+        "stego_prototype_x_bits": 8,
         "manifest_sha256": manifest_sha256(records),
         "trained_at_utc": datetime.now(timezone.utc).isoformat(),
         "sample_diagnostics_summary": {

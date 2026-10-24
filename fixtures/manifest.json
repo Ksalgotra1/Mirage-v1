@@ -480,19 +480,162 @@
     "perturbation_magnitude": 0.0
   },
   {
-    "filepath": "fixtures/adversarial_padded_exploit.pkl",
-    "format": "pkl",
+    "filepath": "fixtures/stego_resnet18_6pct.pt",
+    "format": "pt",
     "ground_truth_label": "MALICIOUS",
-    "attack_type": "adversarial_opcode_frequency_dilution",
-    "embedding_rate": 0.0,
-    "perturbation_magnitude": 0.0
+    "attack_type": "lsb_stego",
+    "embedding_rate": 0.06,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "resnet18 base, 6% LSB capacity filled with SENTINEL_PAYLOAD"
   },
   {
-    "filepath": "fixtures/benign_custom_reducer.pkl",
-    "format": "pkl",
+    "filepath": "fixtures/stego_resnet18_15pct.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "lsb_stego",
+    "embedding_rate": 0.15,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "resnet18 base, 15% LSB capacity filled with SENTINEL_PAYLOAD"
+  },
+  {
+    "filepath": "fixtures/stego_resnet18_25pct.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "lsb_stego",
+    "embedding_rate": 0.25,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "resnet18 base, 25% LSB capacity filled with SENTINEL_PAYLOAD"
+  },
+  {
+    "filepath": "fixtures/stego_resnet18_50pct.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "lsb_stego",
+    "embedding_rate": 0.5,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "resnet18 base, 50% LSB capacity filled with SENTINEL_PAYLOAD"
+  },
+  {
+    "filepath": "fixtures/stego_resnet18_100pct.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "lsb_stego",
+    "embedding_rate": 1.0,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "resnet18 base, 100% LSB capacity filled with SENTINEL_PAYLOAD"
+  },
+  {
+    "filepath": "fixtures/benign_cnn_base.safetensors",
+    "format": "safetensors",
     "ground_truth_label": "BENIGN",
-    "attack_type": "benign_custom_functional_reducer",
+    "attack_type": "none",
     "embedding_rate": 0.0,
-    "perturbation_magnitude": 0.0
+    "perturbation_magnitude": 0.0,
+    "notes": "Synthetic CNN base for LSB stego \u2014 clean reference for Layer 3a centroid"
+  },
+  {
+    "filepath": "fixtures/stego_cnn_6pct.safetensors",
+    "format": "safetensors",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "lsb_stego",
+    "embedding_rate": 0.06,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "Synthetic CNN base, 6% LSB capacity filled with SENTINEL_PAYLOAD"
+  },
+  {
+    "filepath": "fixtures/stego_cnn_15pct.safetensors",
+    "format": "safetensors",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "lsb_stego",
+    "embedding_rate": 0.15,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "Synthetic CNN base, 15% LSB capacity filled with SENTINEL_PAYLOAD"
+  },
+  {
+    "filepath": "fixtures/stego_cnn_25pct.safetensors",
+    "format": "safetensors",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "lsb_stego",
+    "embedding_rate": 0.25,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "Synthetic CNN base, 25% LSB capacity filled with SENTINEL_PAYLOAD"
+  },
+  {
+    "filepath": "fixtures/stego_cnn_50pct.safetensors",
+    "format": "safetensors",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "lsb_stego",
+    "embedding_rate": 0.5,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "Synthetic CNN base, 50% LSB capacity filled with SENTINEL_PAYLOAD"
+  },
+  {
+    "filepath": "fixtures/stego_cnn_100pct.safetensors",
+    "format": "safetensors",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "lsb_stego",
+    "embedding_rate": 1.0,
+    "perturbation_magnitude": 0.0,
+    "payload_sha256": "f5fc834a23d5a6531f4254f3407c0b575e56b8749854d8cdf0d039517b5ddc81",
+    "x_bits": 1,
+    "notes": "Synthetic CNN base, 100% LSB capacity filled with SENTINEL_PAYLOAD"
+  },
+  {
+    "filepath": "fixtures/backdoor_mean_shift_mild.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "weight_backdoor",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 3.0,
+    "backdoor_type": "mean_shift",
+    "notes": "Mean-shift on conv layers by 3 std \u2014 mild, detectable at N=3 threshold"
+  },
+  {
+    "filepath": "fixtures/backdoor_mean_shift_strong.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "weight_backdoor",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 6.0,
+    "backdoor_type": "mean_shift",
+    "notes": "Mean-shift on multiple layers by 6 std \u2014 strong, clearly detectable"
+  },
+  {
+    "filepath": "fixtures/backdoor_outlier_injection.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "weight_backdoor",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 10.0,
+    "backdoor_type": "outlier_injection",
+    "notes": "Inject outlier channels (5% of weights set to 10 std away) in fc layers"
+  },
+  {
+    "filepath": "fixtures/backdoor_variance_inflation.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "weight_backdoor",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 5.0,
+    "backdoor_type": "variance_inflation",
+    "notes": "Variance inflation 5x on layer4 \u2014 weight distribution blown out"
   }
 ]

@@ -1,4 +1,4 @@
-"""Validation report generator for PROJECT-CLIMAX multi-layer defense pipeline.
+"""Validation report generator for MIRAGE multi-layer defense pipeline.
 
 Evaluates:
   1. Standard Clean Checkpoints (Base models)
@@ -28,7 +28,7 @@ from fixtures.generate_edge_case_fixtures import (
 
 def run_pipeline_validation():
     print("=" * 100)
-    print("  PROJECT-CLIMAX: MULTI-LAYER DEFENSE VALIDATION BENCHMARK")
+    print("  MIRAGE: MULTI-LAYER DEFENSE VALIDATION BENCHMARK")
     print("=" * 100)
 
     # Ensure edge-case fixtures exist

@@ -27,7 +27,7 @@ export default function LandingPage() {
                 </div>
                 <div className="relative max-w-5xl">
                     <p className="mb-8 inline-flex -rotate-1 border-2 border-ink bg-[#2F4FE0] px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#F2ECDC] shadow-[3px_3px_0px_#17130E]">
-                        PROJECT-CLIMAX / MODEL SECURITY GATE
+                        MIRAGE / MODEL SECURITY GATE
                     </p>
                     <h1 className="max-w-4xl font-serif text-5xl font-black leading-[0.9] tracking-tight text-[#17130E] sm:text-7xl lg:text-8xl">
                         Inspect the model before it inspects you.

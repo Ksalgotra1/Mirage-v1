@@ -66,10 +66,12 @@ detector/models/*.npz
 detector/models/*.json
 detector/models/*.pkl
 detector/models/*.npy
+demo/
 
 # ── Miscellaneous ─────────────────────────────────────────────────────────────
 paper.txt
 sessions/
 logs/
+scratch/
 .freebuff/
 

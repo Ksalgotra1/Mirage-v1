@@ -86,7 +86,7 @@ def run_smoke(output_dir: Path) -> dict[str, Any]:
     branch_checks: list[dict[str, Any]] = []
     api.summarize_findings = capture_summary
     try:
-        with tempfile.TemporaryDirectory(prefix="project-climax-smoke-") as temp:
+        with tempfile.TemporaryDirectory(prefix="mirage-smoke-") as temp:
             temp_dir = Path(temp)
             first_stego_path: Path | None = None
             for architecture, enum_name, variants in MODELS:

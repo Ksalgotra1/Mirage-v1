@@ -294,10 +294,11 @@ class TestForensicEngine:
                 f"Clean model Q0 should not be contaminated. "
                 f"Per-plane entropy: {bd.get('per_plane_entropy')}"
             )
-            # Suspicious band must not have distribution/capacity/magic
-            assert result["distribution"] is None
-            assert result["capacity"] is None
-            assert result["magic_bytes"] is None
+            # Clean model produces structured signals with unknown pattern and unpopulated magic bytes
+            assert result["analysis_depth"] == "full (all 5 signals)"
+            assert result["distribution"] is not None
+            assert result["capacity"] is not None
+            assert result["magic_bytes"] is not None
         finally:
             os.unlink(pt)
 

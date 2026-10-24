@@ -228,6 +228,14 @@ def _load_bundle() -> dict | str:
             f"retrain until bundle is validated before production use"
         )
 
+    # Check architecture version compatibility
+    arch_version = calibration.get("architecture_version", "v4")
+    if arch_version not in ("v5_4ch_srnet_moment",):
+        return (
+            f"Layer 3a bundle architecture_version={arch_version!r} is not compatible "
+            f"with the current v5 detector. Retrain with v5 train_layer3a_gf.py."
+        )
+
     # Load the embedding network
     torch = _import_torch()
     from detector.models.gf_contrastive_net import OSLEmbeddingNet

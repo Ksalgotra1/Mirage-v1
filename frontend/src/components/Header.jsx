@@ -24,10 +24,10 @@ const Header = () => {
                 <div className="flex h-20 items-center justify-between gap-6">
                     <Link to="/" className="group flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-sm border-2 border-ink bg-[#17130E] text-[#F2ECDC] transition-transform duration-200 group-hover:-rotate-6">
-                            <span className="font-mono text-base font-extrabold leading-none tracking-tighter">PX</span>
+                            <span className="font-mono text-base font-extrabold leading-none tracking-tighter">MR</span>
                         </div>
                         <div className="leading-tight">
-                            <span className="block font-serif text-lg font-black tracking-tight text-[#17130E]">PROJECT-CLIMAX</span>
+                            <span className="block font-serif text-lg font-black tracking-tight text-[#17130E]">MIRAGE</span>
                             <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[#17130E]/70">
                                 4-LAYER ML THREAT DEFENSE
                             </span>

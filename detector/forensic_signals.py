@@ -700,7 +700,7 @@ if __name__ == "__main__":
     import argparse
     import json
 
-    parser = argparse.ArgumentParser(description="PROJECT-CLIMAX Forensic Signal Engine")
+    parser = argparse.ArgumentParser(description="MIRAGE Forensic Signal Engine")
     parser.add_argument("model_path", help="Path to model file")
     parser.add_argument(
         "--band",

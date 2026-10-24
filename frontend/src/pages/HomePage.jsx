@@ -253,8 +253,8 @@ const [scanEvents, setScanEvents] = useState([]);
             {scanResult && (
                 <Reveal ref={resultRef} delay={0.08} className="space-y-8">
                     {/* Fused Verdict Header */}
-                    <div className={`border-2 border-ink p-8 ${
-                        isMalicious ? "bg-[#F7DFDA]" : isSuspicious ? "bg-[#FBF2D6]" : "bg-[#E4EAFB]"
+                    <div className={`border-2 border-ink p-8 shadow-[6px_6px_0px_#17130E] ${
+                        isMalicious ? "bg-[#F7DFDA]" : isSuspicious ? "bg-[#EFC23A]" : "bg-[#E4EAFB]"
                     }`}>
                         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between border-b-2 border-ink pb-6">
                             <div>
@@ -263,7 +263,7 @@ const [scanEvents, setScanEvents] = useState([]);
                                 </span>
                                 <h3 className="font-serif text-3xl sm:text-4xl font-black tracking-tight text-[#17130E] flex items-center gap-3">
                                     {isMalicious && <ShieldAlert className="h-8 w-8 text-[#C4402E]" />}
-                                    {isSuspicious && <AlertTriangle className="h-8 w-8 text-[#EFC23A]" />}
+                                    {isSuspicious && <AlertTriangle className="h-8 w-8 text-[#17130E]" />}
                                     {isClean && <ShieldCheck className="h-8 w-8 text-[#2F4FE0]" />}
                                     VERDICT: {scanResult.fused?.verdict}
                                 </h3>
@@ -271,23 +271,23 @@ const [scanEvents, setScanEvents] = useState([]);
 
                             <div className="flex items-center gap-6">
                                 <div className="text-right font-mono">
-                                    <span className="text-[10px] text-[#17130E]/60 uppercase tracking-widest block">FUSED RISK SCORE</span>
+                                    <span className="text-[10px] text-[#17130E]/70 uppercase tracking-widest block font-bold">FUSED RISK SCORE</span>
                                     <b className="text-2xl font-bold">{scanResult.fused?.score?.toFixed(3) || "0.000"}</b>
                                 </div>
                                 <div className="text-right font-mono">
-                                    <span className="text-[10px] text-[#17130E]/60 uppercase tracking-widest block">FORENSIC BAND</span>
+                                    <span className="text-[10px] text-[#17130E]/70 uppercase tracking-widest block font-bold">FORENSIC BAND</span>
                                     <b className="text-base font-bold uppercase">{scanResult.fused?.forensic_band || "CLEAN"}</b>
                                 </div>
                             </div>
                         </div>
 
                         {scanResult.fused?.explanation && (
-                            <p className="mt-4 font-mono text-xs text-[#17130E]/80">
+                            <p className="mt-4 font-mono text-xs text-[#17130E]/85">
                                 <b>Synthesis:</b> {scanResult.fused.explanation}
                             </p>
                         )}
                         <div className="mt-5 flex flex-wrap gap-2 border-t border-ink/20 pt-4 font-mono text-[10px] font-bold uppercase">
-                            {findingSources.map(([layer, flagged, band]) => <span key={layer} className={`border px-2 py-1 ${flagged ? 'border-[#C4402E] bg-[#F7DFDA] text-[#C4402E]' : band === 'suspicious' ? 'border-[#EFC23A] bg-[#FBF2D6] text-[#17130E]' : 'border-[#2F4FE0] bg-[#E4EAFB] text-[#2F4FE0]'}`}>{layer} · {flagged ? 'Flagged' : band === 'suspicious' ? 'Elevated' : 'Clear'}</span>)}
+                            {findingSources.map(([layer, flagged, band]) => <span key={layer} className={`border px-2.5 py-1 ${flagged ? 'border-[#C4402E] bg-[#F7DFDA] text-[#C4402E]' : band === 'suspicious' ? 'border-ink bg-[#17130E] text-[#EFC23A]' : 'border-[#2F4FE0] bg-[#E4EAFB] text-[#2F4FE0]'}`}>{layer} · {flagged ? 'Flagged' : band === 'suspicious' ? 'Elevated' : 'Clear'}</span>)}
                         </div>
                     </div>
 
@@ -344,9 +344,9 @@ const [scanEvents, setScanEvents] = useState([]);
                             <div className="flex items-center justify-between border-b border-ink/20 pb-2">
                                 <span className="font-mono text-xs font-bold">L3A: STEGANALYSIS</span>
                                 <span className={`font-mono text-[10px] font-bold px-2 py-0.5 border border-ink rounded-full ${
-                                    scanResult.layer3a?.verdict ? "bg-[#C4402E] text-white" : "bg-[#2F4FE0] text-white"
+                                    scanResult.layer3a?.verdict ? "bg-[#C4402E] text-white" : scanResult.layer3a?.forensic_band === "suspicious" ? "bg-[#EFC23A] text-[#17130E]" : "bg-[#2F4FE0] text-white"
                                 }`}>
-                                    {scanResult.layer3a?.verdict ? "FLAGGED" : "CLEARED"}
+                                    {scanResult.layer3a?.verdict ? "FLAGGED" : scanResult.layer3a?.forensic_band === "suspicious" ? "ELEVATED" : "CLEARED"}
                                 </span>
                             </div>
                             <div className="font-mono text-xs space-y-1">
@@ -382,19 +382,70 @@ const [scanEvents, setScanEvents] = useState([]);
                     <ForensicEvidencePanel forensics={scanResult.steganography_forensics} />
 
                     {/* Gemini Threat Assessment */}
-                    {scanResult.summary && (
-                        <div className="border-2 border-ink bg-[#17130E] text-[#F2ECDC] p-6 sm:p-8 space-y-4">
-                            <div className="flex items-center gap-2 border-b border-[#F2ECDC]/20 pb-3">
-                                <Terminal className="h-4 w-4 text-[#EFC23A]" />
-                                <span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#EFC23A]">
-                                    GEMINI THREAT DOSSIER & REMEDIATION
-                                </span>
+                    {scanResult.summary && (() => {
+                        const raw = scanResult.summary.summary || JSON.stringify(scanResult.summary, null, 2);
+
+                        // Group lines into sections for clean rendering
+                        const sections = [];
+                        let current = { header: null, body: [] };
+                        raw.split('\n').forEach(line => {
+                            const t = line.trim();
+                            if (t.startsWith('▸')) {
+                                if (current.header !== null || current.body.length > 0) sections.push(current);
+                                current = { header: t, body: [] };
+                            } else if (t.startsWith('Note:')) {
+                                if (current.header !== null || current.body.length > 0) sections.push(current);
+                                sections.push({ header: 'NOTE', body: [t] });
+                                current = { header: null, body: [] };
+                            } else if (t !== '') {
+                                current.body.push(t);
+                            }
+                        });
+                        if (current.header !== null || current.body.length > 0) sections.push(current);
+
+                        return (
+                            <div className="border-2 border-ink bg-[#17130E] text-[#F2ECDC] p-6 sm:p-8">
+                                <div className="flex items-center gap-2 border-b border-[#F2ECDC]/20 pb-3 mb-6">
+                                    <Terminal className="h-4 w-4 text-[#EFC23A]" />
+                                    <span className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#EFC23A]">
+                                        GEMINI THREAT DOSSIER &amp; REMEDIATION
+                                    </span>
+                                </div>
+                                <div className="space-y-6">
+                                    {sections.map((section, si) => {
+                                        if (section.header === 'NOTE') {
+                                            return (
+                                                <p key={si} className="font-mono text-[10px] text-[#F2ECDC]/35 italic border-t border-[#F2ECDC]/10 pt-4">
+                                                    {section.body[0]}
+                                                </p>
+                                            );
+                                        }
+                                        return (
+                                            <div key={si} className="space-y-1.5">
+                                                {section.header && (
+                                                    <p className="font-mono text-[11px] font-bold text-[#EFC23A] uppercase tracking-[0.2em] mb-3">
+                                                        {section.header}
+                                                    </p>
+                                                )}
+                                                {section.body.map((line, li) =>
+                                                    line.startsWith('•') ? (
+                                                        <div key={li} className="flex gap-2.5 items-start">
+                                                            <span className="text-[#EFC23A] shrink-0 mt-[3px] text-xs">•</span>
+                                                            <span className="text-sm text-[#F2ECDC]/85 leading-relaxed">{line.replace(/^•\s*/, '')}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <p key={li} className="text-sm text-[#F2ECDC]/75 leading-relaxed">{line}</p>
+                                                    )
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <div className="font-mono text-xs leading-relaxed text-[#F2ECDC]/90 whitespace-pre-line">
-                                {scanResult.summary.summary || JSON.stringify(scanResult.summary, null, 2)}
-                            </div>
-                        </div>
-                    )}
+                        );
+                    })()}
+
+
 
                     {/* Disarmament Action Banner (If Malicious) */}
                     {scanResult.disarmament && (

@@ -1,5 +1,5 @@
 /**
- * PROJECT-CLIMAX API Client
+ * MIRAGE API Client
  * Interfaces with the FastAPI defense engine backend (Port 8000).
  */
 

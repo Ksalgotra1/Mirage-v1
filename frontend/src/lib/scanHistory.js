@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'project-climax.scan-history.v1';
+const STORAGE_KEY = 'mirage.scan-history.v1';
 const MAX_ENTRIES = 50;
 
 function storageAvailable() {

@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'project-climax.disarm-handoff.v1';
+const STORAGE_KEY = 'mirage.disarm-handoff.v1';
 
 function storageAvailable() {
     return typeof window !== 'undefined' && Boolean(window.sessionStorage);

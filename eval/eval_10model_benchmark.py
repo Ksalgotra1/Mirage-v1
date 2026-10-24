@@ -79,7 +79,7 @@ def run_benchmark(output_dir: Path) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     detector = Layer3aGFDetector()
     rows: list[dict[str, Any]] = []
-    with tempfile.TemporaryDirectory(prefix="project-climax-layer3a-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="mirage-layer3a-") as temporary:
         temp_dir = Path(temporary)
         for architecture, enum_name in BENCHMARK_MODELS:
             print(f"[benchmark] loading {architecture}.{enum_name}", flush=True)

@@ -194,11 +194,11 @@ def _execute_scan(filepath: str, filename: str, job: ScanJob | None = None) -> d
     complete("fusion", "Threat signal correlation complete", {"verdict": fused_res.get("verdict"), "score": fused_res.get("score"), "outcome": fused_outcome})
 
     disarmament_info = None
-    any_layer_flagged = any(result.get("verdict") for result in (l1_res, l2_res, l3a_res, l3b_res))
     scan_result_dict = {"layer1": l1_res, "layer2": l2_res, "layer3a": l3a_res, "layer3b": l3b_res, "fused": fused_res}
-    if fused_res.get("verdict") == "MALICIOUS" or any_layer_flagged:
+    if fused_res.get("verdict") == "MALICIOUS":
         disarm_scan_id = session_store.save(filepath, scan_result_dict)
         disarmament_info = {"status": "READY_FOR_DISARMAMENT", "scan_id": disarm_scan_id, "expires_in_seconds": 3600, "endpoint": "POST /disarm"}
+
 
     response = {"filename": filename, "format": ext.lstrip("."), "layer1": l1_res, "layer2": l2_res, "layer3a": l3a_res, "layer3b": l3b_res, "fused": fused_res, "steganography_forensics": forensic_signals, "disarmament": disarmament_info}
     start("summary", "Assembling incident evidence and remediation guidance")

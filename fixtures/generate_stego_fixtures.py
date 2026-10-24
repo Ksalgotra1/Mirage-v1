@@ -35,7 +35,7 @@ MANIFEST_PATH = os.path.join(FIXTURES_DIR, "manifest.json")
 PROJECT_ROOT = os.path.dirname(FIXTURES_DIR)
 
 # EICAR-style benign sentinel (won't trigger AV; clearly marks the payload)
-SENTINEL_PAYLOAD = b"SENTINEL_EICAR_BENIGN_MARKER_PAYLOAD_LSB_STEGO_PROJECTCLIMAX_V1"
+SENTINEL_PAYLOAD = b"SENTINEL_EICAR_BENIGN_MARKER_PAYLOAD_LSB_STEGO_MIRAGE_V1"
 
 # Embedding rates (fraction of total weight LSB capacity to fill)
 EMBEDDING_RATES = [0.06, 0.15, 0.25, 0.50, 1.00]
@@ -484,7 +484,7 @@ def generate_stego_and_backdoor_fixtures():
     new_entries = []
 
     print("=" * 60)
-    print("  PROJECT-CLIMAX: Stego & Backdoor Fixture Generator")
+    print("  MIRAGE: Stego & Backdoor Fixture Generator")
     print("=" * 60)
 
     generate_pt_stego_fixtures(base_pt_path, new_entries)
