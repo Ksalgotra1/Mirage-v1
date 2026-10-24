@@ -22,10 +22,10 @@ Comprehensive fault-injection and ablation testing for PROJECT-CLIMAX:
    - L1+L2 evasion: Stego in .safetensors bypasses opcode layers -> caught by L3a
 """
 
-import json
 import os
 import sys
 from unittest.mock import patch
+import pytest
 
 from fastapi.testclient import TestClient
 
@@ -34,9 +34,17 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
 from backend.main import app
-from backend.fusion import FusionEngine
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def _disable_external_summary(monkeypatch):
+    """Resilience tests exercise scanner isolation, not live LLM availability."""
+    monkeypatch.setattr(
+        "backend.main.summarize_findings",
+        lambda findings: {"summary": "test", "provider": "test"},
+    )
 
 BENIGN_PT = os.path.join(PROJECT_ROOT, "fixtures", "benign_resnet18_real.pt")
 MALICIOUS_OPCODE_PT = os.path.join(PROJECT_ROOT, "fixtures", "malicious_pickle_exec_direct_system_var0.pt")

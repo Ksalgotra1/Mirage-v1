@@ -1,8 +1,6 @@
 import json
 import os
-import pickle
 import sys
-import time
 import numpy as np
 
 from sklearn.ensemble import RandomForestClassifier

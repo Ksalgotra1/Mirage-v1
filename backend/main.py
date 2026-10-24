@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import sys
@@ -13,6 +12,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from detector.layer1_modelscan import Layer1ModelScan
 from detector.layer2_classifier import Layer2Classifier
 from backend.fusion import FusionEngine
+from backend.summarizer import summarize_findings
+
+try:
+    from detector.forensic_signals import ForensicSignalEngine
+    _forensic_engine = ForensicSignalEngine()
+except Exception:
+    _forensic_engine = None
 
 app = FastAPI(
     title="Ensemble ML-Model Malware/Backdoor Detector API",
@@ -34,13 +40,27 @@ l2_classifier = Layer2Classifier()
 fusion_engine = FusionEngine()
 
 
+def _run_forensic_analysis(filepath: str, forensic_band: str) -> dict | None:
+    """Run the band-appropriate byte investigation, or skip clean findings."""
+    if forensic_band == "clean":
+        return None
+    if forensic_band not in ("suspicious", "malicious"):
+        return {"error": f"Unknown forensic band: {forensic_band}", "band": forensic_band}
+    if _forensic_engine is None:
+        return {"error": "Forensic signal engine unavailable", "band": forensic_band}
+    try:
+        return _forensic_engine.analyze(filepath, band=forensic_band)
+    except Exception as exc:
+        return {"error": f"Forensic engine error: {exc}", "band": forensic_band}
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "ensemble-model-detector"}
 
 
 @app.post("/scan")
-async def scan_model(file: UploadFile = File(...)):
+def scan_model(file: UploadFile = File(...)):
     filename = file.filename or "uploaded_model"
     ext = os.path.splitext(filename)[1].lower()
 
@@ -50,6 +70,7 @@ async def scan_model(file: UploadFile = File(...)):
     # Write uploaded file to temporary location for scanning
     with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
         shutil.copyfileobj(file.file, tmp)
+        tmp.flush()
         tmp_path = tmp.name
 
     try:
@@ -66,13 +87,13 @@ async def scan_model(file: UploadFile = File(...)):
         except Exception as e:
             l2_res = {"layer": 2, "verdict": False, "probability": 0.0, "top_features": [], "coverage_note": f"Layer 2 execution failure: {str(e)}"}
 
-        # 3. Layer 3a: GF LSB Detector (Person B - sequential GPU execution)
+        # 3. Layer 3a: GF-Fourpart steganography detector
         try:
             l3a_res = _run_layer3a_detector(tmp_path, ext)
         except Exception as e:
             l3a_res = {"layer": "3a", "verdict": False, "distance": 0.0, "threshold": 0.05, "score": 0.0, "coverage_note": f"Layer 3a execution failure: {str(e)}"}
 
-        # 4. Layer 3b: Weight distribution detector (Person B - sequential GPU execution)
+        # 4. Layer 3b: Weight distribution anomaly detector
         try:
             l3b_res = _run_layer3b_detector(tmp_path, ext)
         except Exception as e:
@@ -81,7 +102,11 @@ async def scan_model(file: UploadFile = File(...)):
         # 5. Fusion Engine
         fused_res = fusion_engine.fuse(ext, l1_res, l2_res, l3a_res, l3b_res)
 
-        # 6. Disarmament payload extraction info if Layer 3a positive
+        # 6. Band-wise forensic signal extraction (triggered by Layer 3a score)
+        forensic_band = fused_res.get("forensic_band", "clean")
+        forensic_signals = _run_forensic_analysis(tmp_path, forensic_band)
+
+        # 7. Disarmament payload extraction info if Layer 3a positive
         disarmament_info = None
         if l3a_res.get("verdict"):
             disarmament_info = {
@@ -98,8 +123,16 @@ async def scan_model(file: UploadFile = File(...)):
             "layer3a": l3a_res,
             "layer3b": l3b_res,
             "fused": fused_res,
+            "steganography_forensics": forensic_signals,
             "disarmament": disarmament_info,
         }
+
+        # 8. Gemini / deterministic LLM summary
+        try:
+            summary = summarize_findings(response)
+        except Exception as se:
+            summary = {"summary": f"Summary unavailable: {se}", "provider": "error"}
+        response["summary"] = summary
 
         return JSONResponse(content=response)
 
@@ -112,7 +145,6 @@ async def scan_model(file: UploadFile = File(...)):
 def get_eval_results():
     """Returns evaluation metrics and reference baseline comparison table."""
     results_csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "eval", "results.csv")
-    manifest_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "fixtures", "manifest.json")
 
     results_data = []
     if os.path.exists(results_csv_path):
@@ -139,7 +171,7 @@ def get_eval_results():
 
 
 def _run_layer3a_detector(filepath: str, ext: str) -> dict:
-    """Wrapper to call Person B Layer 3a GF LSB detector if module exists, else placeholder response."""
+    """Execute Layer 3a GF-Fourpart detector."""
     try:
         from detector.layer3a_gf import Layer3aGFDetector
         detector = Layer3aGFDetector()
@@ -150,23 +182,23 @@ def _run_layer3a_detector(filepath: str, ext: str) -> dict:
             "verdict": False,
             "distance": 0.02,
             "threshold": 0.15,
-            "coverage_note": "Layer 3a GF-LSB module (Person B component ready for integration)",
+            "coverage_note": "Layer 3a module unavailable",
         }
 
 
 def _run_layer3b_detector(filepath: str, ext: str) -> dict:
-    """Wrapper to call Person B Layer 3b Weight Distribution detector if module exists, else placeholder response."""
+    """Run Layer 3b reference-free weight anomaly detector."""
     try:
-        from detector.layer3b_wd import Layer3bWDDetector
-        detector = Layer3bWDDetector()
-        return detector.predict(filepath)
-    except ImportError:
+        from detector.layer3b_weights import scan
+        return scan(filepath)
+    except Exception as e:
         return {
             "layer": "3b",
             "verdict": False,
-            "deviation": 0.4,
-            "threshold": 3.0,
-            "coverage_note": "Layer 3b Weight Distribution module (Person B component ready for integration)",
+            "score": 0.0,
+            "flagged_layers": [],
+            "signals": {},
+            "coverage_note": f"Layer 3b execution failure: {str(e)}",
         }
 
 

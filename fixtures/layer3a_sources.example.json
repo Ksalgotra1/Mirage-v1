@@ -1,0 +1,23 @@
+[
+  {
+    "base_checkpoint_id": "resnet18-imagenet1k-seed101",
+    "filepath": "/absolute/path/to/a/real/trained/resnet18-imagenet1k-seed101.pt",
+    "split": "train",
+    "architecture_family": "resnet18",
+    "format": "pt",
+    "training": {
+      "status": "trained",
+      "training_dataset": "ImageNet-1k",
+      "training_seed": 101,
+      "training_run_id": "resnet18-imagenet1k-101",
+      "metric": "test_accuracy",
+      "metric_value": 0.91
+    },
+    "provenance": {
+      "origin": "PROJECT-CLIMAX reproducible training run",
+      "license": "project-generated",
+      "source_url": null
+    }
+  }
+]
+

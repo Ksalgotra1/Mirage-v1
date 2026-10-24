@@ -2,7 +2,6 @@ import json
 import os
 import pickle
 import struct
-import sys
 import numpy as np
 
 # Use PyTorch & Torchvision installed in .venv

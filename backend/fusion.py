@@ -69,6 +69,18 @@ class FusionEngine:
             or (l3b_res is not None and bool(l3b_res.get("verdict", False)))
         )
 
+        # Layer 3a supplies calibrated bands when its bundle is available.
+        # Retain score thresholds for older/external detector responses.
+        supplied_band = (l3a_res or {}).get("forensic_band")
+        if supplied_band in ("clean", "suspicious", "malicious"):
+            forensic_band = supplied_band
+        elif s_l3a >= 0.70:
+            forensic_band = "malicious"
+        elif s_l3a >= 0.40:
+            forensic_band = "suspicious"
+        else:
+            forensic_band = "clean"
+
         explanations = []
         if l1_res.get("verdict"):
             explanations.append("Layer 1: Rule-based dangerous callable detected")
@@ -85,6 +97,7 @@ class FusionEngine:
         return {
             "verdict": "MALICIOUS" if is_malicious else "BENIGN",
             "score": round(float(fused_score), 4),
+            "forensic_band": forensic_band,
             "weights_applied": {
                 "l1": round(w_l1, 2),
                 "l2": round(w_l2, 2),

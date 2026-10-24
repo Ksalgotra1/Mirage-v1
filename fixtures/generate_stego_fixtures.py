@@ -1,22 +1,13 @@
-"""
-generate_stego_fixtures.py — Phase 1 (Person B / GF Track)
-===========================================================
-Generates:
-  1. LSB steganography fixtures (.pt and .safetensors) at 6/15/25/50/100% embedding rates
-  2. Weight-distribution backdoor fixtures (.pt) for Layer 3b calibration
+"""Generate LSB steganography and weight-distribution backdoor test fixtures.
 
-Both fixture types are appended (not overwritten) to fixtures/manifest.json
-so Person A's existing entries are fully preserved.
-
-Payload: EICAR-style benign sentinel string, tiled to fill the required capacity.
+Produces synthetic test checkpoints with known embedding rates (6-100%)
+for offline validation and unit tests.
 """
 
 import hashlib
 import json
 import math
 import os
-import struct
-import sys
 
 import numpy as np
 
@@ -29,7 +20,7 @@ except ImportError:
     print("[WARNING] PyTorch not found — .pt fixture generation will be skipped.")
 
 try:
-    from safetensors.torch import save_file as st_save_file, load_file as st_load_file
+    from safetensors.torch import save_file as st_save_file
     HAS_SAFETENSORS = True
 except ImportError:
     HAS_SAFETENSORS = False
@@ -195,7 +186,7 @@ def generate_pt_stego_fixtures(base_model_path: str, new_entries: list):
 
     print(f"\n[PT STEGO] Loading base model from {base_model_path}")
     if not os.path.exists(base_model_path):
-        print(f"  Base model not found. Generating resnet18 state_dict...")
+        print("  Base model not found. Generating resnet18 state_dict...")
         m = models.resnet18(weights=None)
         torch.save(m.state_dict(), base_model_path)
 
@@ -268,7 +259,7 @@ def generate_safetensors_stego_fixtures(new_entries: list):
 
     base_st_path = os.path.join(FIXTURES_DIR, "benign_cnn_base.safetensors")
     st_save_file(base_state, base_st_path)
-    print(f"  [OK] Clean base: benign_cnn_base.safetensors")
+    print("  [OK] Clean base: benign_cnn_base.safetensors")
 
     new_entries.append({
         "filepath": os.path.relpath(base_st_path, PROJECT_ROOT).replace("\\", "/"),
@@ -325,7 +316,7 @@ def generate_backdoor_fixtures(base_model_path: str, new_entries: list):
         print("[SKIP] PyTorch unavailable — skipping backdoor fixtures.")
         return
 
-    print(f"\n[BACKDOOR] Generating weight-distribution backdoor fixtures...")
+    print("\n[BACKDOOR] Generating weight-distribution backdoor fixtures...")
 
     if not os.path.exists(base_model_path):
         m = models.resnet18(weights=None)
@@ -493,7 +484,7 @@ def generate_stego_and_backdoor_fixtures():
     new_entries = []
 
     print("=" * 60)
-    print("  Phase 1 (Person B) — LSB Stego + Backdoor Fixture Generator")
+    print("  PROJECT-CLIMAX: Stego & Backdoor Fixture Generator")
     print("=" * 60)
 
     generate_pt_stego_fixtures(base_pt_path, new_entries)
@@ -503,7 +494,6 @@ def generate_stego_and_backdoor_fixtures():
     verify_extraction(base_pt_path)
 
     print("\n[DONE] Fixture generation complete.")
-    print("       Next step: implement detector/layer3a_gf.py and detector/layer3b_wd.py")
 
 
 if __name__ == "__main__":

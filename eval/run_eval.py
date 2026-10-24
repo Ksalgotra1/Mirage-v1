@@ -30,7 +30,7 @@ def run_evaluation(manifest_path=MANIFEST_PATH, output_csv=OUTPUT_CSV_PATH):
     fusion_engine = FusionEngine()
     entropy_baseline = ByteEntropyBaseline()
 
-    # Import Person B detectors if available
+    # Load Layer 3a/3b detectors if available
     try:
         from detector.layer3a_gf import Layer3aGFDetector
         l3a_detector = Layer3aGFDetector()
@@ -38,8 +38,8 @@ def run_evaluation(manifest_path=MANIFEST_PATH, output_csv=OUTPUT_CSV_PATH):
         l3a_detector = None
 
     try:
-        from detector.layer3b_wd import Layer3bWDDetector
-        l3b_detector = Layer3bWDDetector()
+        import detector.layer3b_weights as _l3b_mod
+        l3b_detector = _l3b_mod
     except ImportError:
         l3b_detector = None
 
@@ -68,7 +68,7 @@ def run_evaluation(manifest_path=MANIFEST_PATH, output_csv=OUTPUT_CSV_PATH):
         l2_res = l2_classifier.predict(abs_path)
 
         l3a_res = l3a_detector.predict(abs_path) if l3a_detector else {"verdict": False, "distance": 0.0}
-        l3b_res = l3b_detector.predict(abs_path) if l3b_detector else {"verdict": False, "deviation": 0.0}
+        l3b_res = l3b_detector.scan(abs_path) if l3b_detector else {"verdict": False, "score": 0.0}
 
         entropy_res = entropy_baseline.predict(abs_path)
         fused = fusion_engine.fuse(fmt, l1_res, l2_res, l3a_res, l3b_res)
