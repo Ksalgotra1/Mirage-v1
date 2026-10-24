@@ -1,3 +1,4 @@
+
 from typing import Dict, Any, Optional
 
 class FusionEngine:
@@ -59,8 +60,14 @@ class FusionEngine:
         else:
             fused_score = 0.0
 
-        # Hard override: If Layer 1 finds CRITICAL rule-based executable code, force verdict to MALICIOUS
-        is_malicious = fused_score >= 0.5 or l1_res.get("verdict", False) or l2_res.get("verdict", False)
+        # Override: If any layer detects a confirmed threat, or fused score >= 0.5, mark as MALICIOUS
+        is_malicious = (
+            fused_score >= 0.5
+            or bool(l1_res.get("verdict", False))
+            or bool(l2_res.get("verdict", False))
+            or (l3a_res is not None and bool(l3a_res.get("verdict", False)))
+            or (l3b_res is not None and bool(l3b_res.get("verdict", False)))
+        )
 
         explanations = []
         if l1_res.get("verdict"):

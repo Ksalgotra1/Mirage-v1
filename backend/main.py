@@ -53,18 +53,30 @@ async def scan_model(file: UploadFile = File(...)):
         tmp_path = tmp.name
 
     try:
-        # Sequential execution of detection layers to adhere to GPU VRAM constraints
+        # Sequential execution of detection layers with strict fault isolation
         # 1. Layer 1: Rule-based opcode bouncer (CPU)
-        l1_res = l1_scanner.scan(tmp_path)
+        try:
+            l1_res = l1_scanner.scan(tmp_path)
+        except Exception as e:
+            l1_res = {"layer": 1, "verdict": False, "issues": [], "coverage_note": f"Layer 1 execution failure: {str(e)}"}
 
         # 2. Layer 2: Statistical opcode classifier (CPU/Memory)
-        l2_res = l2_classifier.predict(tmp_path)
+        try:
+            l2_res = l2_classifier.predict(tmp_path)
+        except Exception as e:
+            l2_res = {"layer": 2, "verdict": False, "probability": 0.0, "top_features": [], "coverage_note": f"Layer 2 execution failure: {str(e)}"}
 
-        # 3. Layer 3a: GF LSB Detector (Person B integration point - sequential GPU execution)
-        l3a_res = _run_layer3a_detector(tmp_path, ext)
+        # 3. Layer 3a: GF LSB Detector (Person B - sequential GPU execution)
+        try:
+            l3a_res = _run_layer3a_detector(tmp_path, ext)
+        except Exception as e:
+            l3a_res = {"layer": "3a", "verdict": False, "distance": 0.0, "threshold": 0.05, "score": 0.0, "coverage_note": f"Layer 3a execution failure: {str(e)}"}
 
-        # 4. Layer 3b: Weight distribution detector (Person B integration point - sequential GPU execution)
-        l3b_res = _run_layer3b_detector(tmp_path, ext)
+        # 4. Layer 3b: Weight distribution detector (Person B - sequential GPU execution)
+        try:
+            l3b_res = _run_layer3b_detector(tmp_path, ext)
+        except Exception as e:
+            l3b_res = {"layer": "3b", "verdict": False, "deviation": 0.0, "threshold": 3.0, "score": 0.0, "coverage_note": f"Layer 3b execution failure: {str(e)}"}
 
         # 5. Fusion Engine
         fused_res = fusion_engine.fuse(ext, l1_res, l2_res, l3a_res, l3b_res)

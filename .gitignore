@@ -1,28 +1,71 @@
-# Python bytecode & virtual environments
+# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
+*.pyo
 .venv/
 venv/
 env/
 
-# OS generated files
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# Environment variables
-.env
-.env.local
-
-# Node / Dependencies
+# ── Build / Node ──────────────────────────────────────────────────────────────
 node_modules/
 dist/
 build/
 
-# Ignore generated binary model weights in fixtures
+# ── Notebooks (auto-checkpoints) ──────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Zip snapshots (never commit build archives) ───────────────────────────────
+*.zip
+
+# ── Training kit (local only — send manually to collaborators) ────────────────
+training_kit/
+
+# ── Docs (internal agent notes and runbooks — not for public repo) ────────────
+docs/
+
+# ── Generated fixture binaries (sources are gitignored; generators are kept) ──
 fixtures/*.pt
 fixtures/*.pkl
 fixtures/*.h5
 fixtures/*.safetensors
 fixtures/*.bin
 !fixtures/generate_fixtures.py
+!fixtures/generate_stego_fixtures.py
+!fixtures/generate_patch_dataset.py
+!fixtures/build_layer3a_corpus.py
+!fixtures/acquire_official_layer3a_sources.py
+!fixtures/audit_layer3a_sources.py
 !fixtures/manifest.json
+!fixtures/layer3a_manifest.py
+!fixtures/layer3a_sources.example.json
+!fixtures/official_layer3a_source_catalog.json
+!fixtures/LAYER3A_CORPUS_PROTOCOL.md
+!fixtures/LAYER3A_DATASET.md
+
+output/
+eval/results*.csv
+eval/diag_output/
+eval/__pycache__/
+
+# ── Pytest cache ──────────────────────────────────────────────────────────────
+.pytest_cache/
+
+# ── Model weights (untracked until production release / Git LFS) ───────────────
+detector/models/*.pt
+detector/models/*.pth
+detector/models/*.npz
+detector/models/*.json
+detector/models/*.pkl
+detector/models/*.npy
+
+# ── Miscellaneous ─────────────────────────────────────────────────────────────
+paper.txt

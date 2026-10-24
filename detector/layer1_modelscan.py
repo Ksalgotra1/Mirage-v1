@@ -1,18 +1,24 @@
 import os
+import pickletools
 import sys
+import zipfile
 
 class Layer1ModelScan:
-    """Layer 1: Rule-based opcode bouncer backed by protectai/modelscan (Apache-2.0).
+    """Layer 1: Rule-based opcode bouncer.
 
-    Scans model pickle opcodes and Keras/H5 models for known unsafe callables (e.g., os.system, subprocess).
+    Scans model pickle opcodes for known unsafe callables (e.g., os.system, subprocess, eval, exec).
     """
 
     SUPPORTED_EXTENSIONS = {".pt", ".pkl", ".h5", ".pth", ".bin"}
+    DANGEROUS_CALLABLES = {
+        "os.system", "nt.system", "posix.system", "subprocess.Popen", "subprocess.call",
+        "subprocess.run", "subprocess.check_output", "builtins.eval", "builtins.exec",
+        "builtins.__import__", "importlib.import_module", "posix.popen", "nt.popen"
+    }
 
     def scan(self, filepath: str) -> dict:
         ext = os.path.splitext(filepath)[1].lower()
 
-        # Format coverage boundary check
         if ext == ".safetensors":
             return {
                 "layer": 1,
@@ -36,9 +42,6 @@ class Layer1ModelScan:
 
             issues_list = []
             verdict = False
-
-            # Modelscan returns dictionary or object with issues
-            # We parse issues from modelscan output
             issues = results.get("issues", []) if isinstance(results, dict) else getattr(results, "issues", [])
 
             for issue in issues:
@@ -50,69 +53,84 @@ class Layer1ModelScan:
                 }
                 issues_list.append(issue_dict)
 
-                # If any CRITICAL or HIGH issue found, verdict is True (Malicious)
                 sev = issue_dict["severity"].upper()
                 if "CRITICAL" in sev or "HIGH" in sev or "MEDIUM" in sev:
                     verdict = True
 
-            return {
-                "layer": 1,
-                "verdict": verdict,
-                "issues": issues_list,
-                "coverage_note": None,
-            }
+            if verdict or len(issues_list) > 0:
+                return {
+                    "layer": 1,
+                    "verdict": verdict,
+                    "issues": issues_list,
+                    "coverage_note": None,
+                }
+        except Exception:
+            pass
 
-        except ImportError:
-            # Fallback direct pickle opcode checker if modelscan is not yet installed
-            return self._fallback_pickle_checker(filepath)
-        except Exception as e:
-            return {
-                "layer": 1,
-                "verdict": False,
-                "issues": [],
-                "coverage_note": f"ModelScan execution error: {str(e)}",
-            }
+        # Robust stack-aware opcode scanner
+        return self._fallback_pickle_checker(filepath)
 
     def _fallback_pickle_checker(self, filepath: str) -> dict:
-        """Fallback direct opcode walker if modelscan import fails."""
-        import pickletools
-        dangerous_callables = {"os.system", "subprocess", "builtins.eval", "builtins.exec", "posix.system"}
+        """Robust stack-aware direct opcode walker for Pickle and PyTorch zipfiles."""
         issues = []
         verdict = False
 
         ext = os.path.splitext(filepath)[1].lower()
-        if ext in {".pkl", ".pt", ".pth"}:
+        if ext in {".pkl", ".pt", ".pth", ".bin"}:
             try:
-                with open(filepath, "rb") as f:
-                    content = f.read()
+                content = None
+                if zipfile.is_zipfile(filepath):
+                    with zipfile.ZipFile(filepath, "r") as z:
+                        for name in z.namelist():
+                            if name.endswith(".pkl") or name.endswith("/data.pkl") or name == "data.pkl":
+                                try:
+                                    content = z.read(name)
+                                    if content:
+                                        break
+                                except Exception:
+                                    pass
 
-                # Walk opcodes
-                current_module = ""
+                if content is None:
+                    with open(filepath, "rb") as f:
+                        content = f.read()
+
+                stack = []
                 for opcode, arg, pos in pickletools.genops(content):
-                    if opcode.name in ("GLOBAL", "STACK_GLOBAL"):
-                        target = f"{arg}"
-                        for danger in dangerous_callables:
-                            if danger in target:
+                    op_name = opcode.name
+
+                    if op_name in ("SHORT_BINUNICODE", "BINUNICODE", "UNICODE", "STRING"):
+                        stack.append(str(arg))
+
+                    elif op_name in ("GLOBAL", "STACK_GLOBAL"):
+                        target = ""
+                        if op_name == "STACK_GLOBAL" and len(stack) >= 2:
+                            func = stack.pop()
+                            mod = stack.pop()
+                            target = f"{mod}.{func}"
+                        elif arg is not None:
+                            target = str(arg).replace(" ", ".")
+
+                        for danger in self.DANGEROUS_CALLABLES:
+                            if danger in target or target in danger:
                                 verdict = True
                                 issues.append({
                                     "severity": "CRITICAL",
-                                    "description": f"Dangerous callable detected at position {pos}",
+                                    "description": f"Dangerous callable detected at position {pos}: {target}",
                                     "operator": target,
                                     "module": "pickle",
                                 })
-            except Exception as e:
+            except Exception:
                 pass
 
         return {
             "layer": 1,
             "verdict": verdict,
             "issues": issues,
-            "coverage_note": "Fallback pickle opcode scanner used (modelscan not loaded)",
+            "coverage_note": "Fallback pickle opcode scanner used" if not verdict else None,
         }
 
 
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) > 1:
         l1 = Layer1ModelScan()
         print(l1.scan(sys.argv[1]))

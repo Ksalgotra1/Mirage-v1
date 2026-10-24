@@ -1,0 +1,171 @@
+/* ==========================================================================
+   PROJECT-CLIMAX: Obsidian Forensic Authentic Design System
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-color: #0A0A0B;
+  --surface-color: #131316;
+  --surface-low: #18171f;
+  --surface-container: #201f26;
+  --surface-high: #2a2931;
+  --surface-highest: #35343c;
+  
+  --accent-violet: #7C6FEA;
+  --primary: #c6bfff;
+  --danger: #ff5c5c;
+  --danger-container: #93000a;
+  --warning: #ffb957;
+  --success: #34d399;
+  
+  --text-primary: #e5e1eb;
+  --text-variant: #c8c4d5;
+  --outline-muted: #474553;
+  --border-hairline: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #0A0A0B;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+  color: #e5e1eb;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.font-data-mono, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Hairline borders */
+.hairline-border {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hairline-border-violet {
+  border: 1px solid rgba(124, 111, 234, 0.4);
+}
+
+/* 3-Dot Window Chrome in top-left */
+.window-chrome {
+  position: relative;
+}
+
+.window-chrome::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #474553;
+  box-shadow: 8px 0 0 #474553, 16px 0 0 #474553;
+  position: absolute;
+  top: 14px;
+  left: 14px;
+}
+
+/* Glass Panels */
+.glass-panel {
+  background: rgba(19, 19, 22, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 3D Stack Perspective for Forensics */
+.stack-perspective {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+.stack-panel {
+  position: absolute;
+  width: 80%;
+  height: 70%;
+  left: 10%;
+  top: 15%;
+  transition: transform 0.5s ease;
+}
+
+.panel-1 { transform: translateZ(-300px) translateY(-100px) rotateX(15deg) rotateY(-15deg); opacity: 0.3; }
+.panel-2 { transform: translateZ(-150px) translateY(-50px) rotateX(15deg) rotateY(-15deg); opacity: 0.6; }
+.panel-3 { transform: translateZ(0px) translateY(0px) rotateX(15deg) rotateY(-15deg); opacity: 1; }
+
+.scan-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #7C6FEA;
+  box-shadow: 0 0 10px 2px rgba(124, 111, 234, 0.5);
+  animation: scanAnim 3s infinite linear;
+  z-index: 10;
+}
+
+@keyframes scanAnim {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Pulsing Status Dot */
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 111, 234, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(124, 111, 234, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 111, 234, 0); }
+}
+
+.pulse-dot {
+  animation: pulse 2s infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7C6FEA;
+}
+
+/* Nav Item active styling */
+.nav-link {
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.nav-link.active {
+  color: #c6bfff !important;
+  font-weight: 700;
+  border-bottom: 2px solid #c6bfff;
+}
+
+/* Dropzone dragover */
+.dropzone-dragover {
+  border-color: #7C6FEA !important;
+  background-color: rgba(124, 111, 234, 0.08) !important;
+}
+
+.image-rendering-pixelated {
+  image-rendering: pixelated;
+}

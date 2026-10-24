@@ -1,9 +1,10 @@
 import os
 import pickle
 import pickletools
+import re
+import zipfile
 import numpy as np
 
-# Vocabulary of tracked unigram opcodes and bigram transitions
 TRACKED_UNIGRAMS = [
     "GLOBAL", "STACK_GLOBAL", "REDUCE", "BUILD", "INST", "OBJ",
     "SETITEMS", "SETITEM", "MARK", "TUPLE", "TUPLE1", "TUPLE2", "TUPLE3",
@@ -28,25 +29,53 @@ TRACKED_BIGRAMS = [
     ("REDUCE", "STOP")
 ]
 
+
+def safe_extract_opcodes(data: bytes) -> list:
+    """Safely extracts opcode names from raw pickle bytes, handling Protocol 4/5 framing."""
+    opcodes = []
+    try:
+        for opcode, arg, pos in pickletools.genops(data):
+            opcodes.append(opcode.name)
+    except Exception:
+        # Fallback regex/byte scan for Protocol 4/5 checkpoints with unsupported framing
+        for op in pickletools.opcodes:
+            if not op.code:
+                continue
+            pattern = re.escape(op.code.encode("latin1"))
+            count = len(re.findall(pattern, data))
+            if count > 0:
+                opcodes.extend([op.name] * count)
+    return opcodes
+
+
 class OpcodeFeatureExtractor:
     """Extracts normalized opcode unigram frequencies, bigram transition frequencies,
-
-    and structural metrics from a pickle file without executing it.
+    and structural metrics from pickle/pt files without executing untrusted code.
     """
 
     def extract_features(self, filepath: str) -> np.ndarray:
         ext = os.path.splitext(filepath)[1].lower()
         if ext not in {".pkl", ".pt", ".pth", ".bin"}:
-            # For non-pickle formats (.h5, .safetensors), return zero vector
             return np.zeros(len(TRACKED_UNIGRAMS) + len(TRACKED_BIGRAMS) + 3, dtype=np.float32)
 
         try:
-            with open(filepath, "rb") as f:
-                content = f.read()
+            content = None
+            if zipfile.is_zipfile(filepath):
+                with zipfile.ZipFile(filepath, "r") as z:
+                    for name in z.namelist():
+                        if name.endswith(".pkl") or name.endswith("/data.pkl") or name == "data.pkl":
+                            try:
+                                content = z.read(name)
+                                if content:
+                                    break
+                            except Exception:
+                                pass
 
-            opcodes = []
-            for opcode, arg, pos in pickletools.genops(content):
-                opcodes.append(opcode.name)
+            if content is None:
+                with open(filepath, "rb") as f:
+                    content = f.read()
+
+            opcodes = safe_extract_opcodes(content)
 
             if not opcodes:
                 return np.zeros(len(TRACKED_UNIGRAMS) + len(TRACKED_BIGRAMS) + 3, dtype=np.float32)
@@ -59,7 +88,6 @@ class OpcodeFeatureExtractor:
 
             unigram_freqs = [unigram_counts[u] / total_ops for u in TRACKED_UNIGRAMS]
 
-            # Bigram counts
             bigram_counts = {f"{b[0]}->{b[1]}": 0 for b in TRACKED_BIGRAMS}
             total_bigrams = max(1, total_ops - 1)
 
@@ -70,10 +98,10 @@ class OpcodeFeatureExtractor:
 
             bigram_freqs = [bigram_counts[f"{b[0]}->{b[1]}"] / total_bigrams for b in TRACKED_BIGRAMS]
 
-            # Additional structural metrics
+            # Structural callable anomaly metrics
             reduce_count = opcodes.count("REDUCE") + opcodes.count("BUILD")
             global_count = opcodes.count("GLOBAL") + opcodes.count("STACK_GLOBAL")
-            eval_risk_ratio = (reduce_count + global_count) / total_ops
+            eval_risk_ratio = (reduce_count + global_count) / max(1, total_ops)
 
             metrics = [
                 float(total_ops),
@@ -81,10 +109,9 @@ class OpcodeFeatureExtractor:
                 float(eval_risk_ratio)
             ]
 
-            feature_vec = np.array(unigram_freqs + bigram_freqs + metrics, dtype=np.float32)
-            return feature_vec
+            return np.array(unigram_freqs + bigram_freqs + metrics, dtype=np.float32)
 
-        except Exception as e:
+        except Exception:
             return np.zeros(len(TRACKED_UNIGRAMS) + len(TRACKED_BIGRAMS) + 3, dtype=np.float32)
 
     def get_feature_names(self):
@@ -95,10 +122,7 @@ class OpcodeFeatureExtractor:
 
 
 class Layer2Classifier:
-    """Layer 2: Primary Statistical Opcode Classifier using XGBoost.
-
-    Evaluates structural opcode anomalies across unigram and bigram n-gram features.
-    """
+    """Layer 2: Statistical Opcode Classifier using XGBoost."""
 
     MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "layer2_xgb.pkl")
 
@@ -129,12 +153,21 @@ class Layer2Classifier:
         features = self.extractor.extract_features(filepath)
         feature_names = self.extractor.get_feature_names()
 
+        # If zero features extracted (e.g. invalid or empty pickle stream)
+        if np.all(features == 0):
+            return {
+                "layer": 2,
+                "verdict": False,
+                "probability": 0.0,
+                "top_features": [],
+                "coverage_note": "No pickle opcodes detected in file",
+            }
+
         if self.model is not None:
             try:
                 proba = float(self.model.predict_proba([features])[0][1])
                 verdict = bool(proba >= 0.5)
 
-                # Identify top contributing anomaly features
                 importances = getattr(self.model, "feature_importances_", np.zeros(len(features)))
                 top_idx = np.argsort(importances * features)[::-1][:3]
                 top_feats = []
@@ -153,10 +186,10 @@ class Layer2Classifier:
                     "top_features": top_feats,
                     "coverage_note": None,
                 }
-            except Exception as e:
+            except Exception:
                 pass
 
-        # Fallback structural ratio check if model file hasn't been generated yet
+        # Fallback structural ratio check
         eval_risk_ratio = features[-1]
         global_count = features[-2]
         proba = min(1.0, (eval_risk_ratio * 3.0) + (global_count * 0.2))
@@ -167,7 +200,7 @@ class Layer2Classifier:
             "verdict": verdict,
             "probability": round(float(proba), 4),
             "top_features": [{"feature": "eval_risk_ratio (fallback)", "importance": 1.0, "value": round(float(eval_risk_ratio), 4)}],
-            "coverage_note": "Using structural risk ratio fallback (run `.venv/bin/python detector/train_layer2.py` to active XGBoost)",
+            "coverage_note": "Using structural risk ratio fallback",
         }
 
 
