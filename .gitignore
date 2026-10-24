@@ -1,0 +1,28 @@
+# Python bytecode & virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+
+# Node / Dependencies
+node_modules/
+dist/
+build/
+
+# Ignore generated binary model weights in fixtures
+fixtures/*.pt
+fixtures/*.pkl
+fixtures/*.h5
+fixtures/*.safetensors
+fixtures/*.bin
+!fixtures/generate_fixtures.py
+!fixtures/manifest.json

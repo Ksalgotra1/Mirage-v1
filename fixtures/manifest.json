@@ -1,0 +1,482 @@
+[
+  {
+    "filepath": "fixtures/benign_resnet18_real.pt",
+    "format": "pt",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_mobilenet_v2_real.pt",
+    "format": "pt",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_squeezenet1_0_real.pt",
+    "format": "pt",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_alexnet_real.pt",
+    "format": "pt",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_shufflenet_v2_x1_0_real.pt",
+    "format": "pt",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_densenet121_real.pt",
+    "format": "pt",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_linear_model_v0.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_linear_model_v1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_linear_model_v2.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_mlp_classifier_v0.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_mlp_classifier_v1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_mlp_classifier_v2.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_cnn_backbone_v0.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_cnn_backbone_v1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_cnn_backbone_v2.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_resnet_custom_v0.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_resnet_custom_v1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_resnet_custom_v2.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_transformer_encoder_v0.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_transformer_encoder_v1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_transformer_encoder_v2.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_bert_embeddings_v0.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_bert_embeddings_v1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_bert_embeddings_v2.pkl",
+    "format": "pkl",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_keras_model_0.h5",
+    "format": "h5",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_hf_model_0.safetensors",
+    "format": "safetensors",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_keras_model_1.h5",
+    "format": "h5",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_hf_model_1.safetensors",
+    "format": "safetensors",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_keras_model_2.h5",
+    "format": "h5",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_hf_model_2.safetensors",
+    "format": "safetensors",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_keras_model_3.h5",
+    "format": "h5",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/benign_hf_model_3.safetensors",
+    "format": "safetensors",
+    "ground_truth_label": "BENIGN",
+    "attack_type": "none",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_direct_system_var0.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_direct_system",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_direct_system_var1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_direct_system",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_direct_system_var2.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_direct_system",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_direct_system_var3.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_direct_system",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_direct_subprocess_var0.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_direct_subprocess",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_direct_subprocess_var1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_direct_subprocess",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_direct_subprocess_var2.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_direct_subprocess",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_direct_subprocess_var3.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_direct_subprocess",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_importlib_var0.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_importlib",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_importlib_var1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_importlib",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_importlib_var2.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_importlib",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_importlib_var3.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_importlib",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_partial_var0.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_partial",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_partial_var1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_partial",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_partial_var2.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_partial",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_partial_var3.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_partial",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_attrgetter_var0.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_attrgetter",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_attrgetter_var1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_attrgetter",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_attrgetter_var2.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_attrgetter",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_attrgetter_var3.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_attrgetter",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_codecs_var0.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_codecs",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_codecs_var1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_codecs",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_codecs_var2.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_codecs",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_codecs_var3.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_codecs",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_chained_var0.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_chained",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_chained_var1.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_chained",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_chained_var2.pt",
+    "format": "pt",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_chained",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  },
+  {
+    "filepath": "fixtures/malicious_pickle_exec_chained_var3.pkl",
+    "format": "pkl",
+    "ground_truth_label": "MALICIOUS",
+    "attack_type": "pickle_exec_chained",
+    "embedding_rate": 0.0,
+    "perturbation_magnitude": 0.0
+  }
+]
