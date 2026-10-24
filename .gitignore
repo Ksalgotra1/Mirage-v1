@@ -69,3 +69,7 @@ detector/models/*.npy
 
 # ── Miscellaneous ─────────────────────────────────────────────────────────────
 paper.txt
+sessions/
+logs/
+.freebuff/
+

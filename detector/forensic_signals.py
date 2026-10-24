@@ -621,7 +621,9 @@ class ForensicSignalEngine:
 
         Args:
             filepath:  Absolute path to the model file.
-            band:      "suspicious" (lightweight) or "malicious" (full).
+            band:      "suspicious" or "malicious". Both run the full suite;
+                       the band remains a confidence classification, not an
+                       analysis-depth gate.
 
         Returns:
             Structured forensic signals dict, or an error dict on failure.
@@ -647,27 +649,12 @@ class ForensicSignalEngine:
 
         estimated_x = bit_depth.get("estimated_x", 0)
 
-        # --- Signal 3: Always run (payload entropy) ---
+        # --- Signal 3: Payload entropy ---
         entropy = _analyze_payload_entropy(flat_bytes, estimated_x)
 
-        if band == "suspicious":
-            # Lightweight mode: only signals 1 + 3
-            return {
-                "band": "suspicious",
-                "analysis_depth": "lightweight (signals 1 + 3 only)",
-                "note": (
-                    "Layer 3a score is in the SUSPICIOUS band (0.40–0.70). "
-                    "Full forensic breakdown (distribution, capacity, magic bytes) "
-                    "is reserved for the MALICIOUS band (score ≥ 0.70)."
-                ),
-                "bit_depth": bit_depth,
-                "distribution": None,
-                "entropy": entropy,
-                "capacity": None,
-                "magic_bytes": None,
-            }
-
-        # --- MALICIOUS band: run all 5 signals ---
+        # Both elevated bands run all five signals. A suspicious result is
+        # still not a confirmed malicious verdict; it simply receives enough
+        # evidence for a meaningful analyst review.
 
         # Signal 2: Distribution geometry
         distribution = _analyze_distribution_geometry(
@@ -690,8 +677,13 @@ class ForensicSignalEngine:
             magic = _detect_magic_bytes(flat_bytes, estimated_x)
 
         return {
-            "band": "malicious",
+            "band": band,
             "analysis_depth": "full (all 5 signals)",
+            "note": (
+                "Full forensic review triggered by an elevated Layer 3a signal. "
+                "The forensic band is a confidence classification and does not "
+                "by itself change the fused verdict."
+            ),
             "bit_depth": bit_depth,
             "distribution": distribution,
             "entropy": entropy,

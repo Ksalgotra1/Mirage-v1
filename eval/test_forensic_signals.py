@@ -319,16 +319,17 @@ class TestForensicEngine:
         finally:
             os.unlink(pt)
 
-    def test_suspicious_band_only_has_signals_1_and_3(self):
+    def test_suspicious_band_has_all_forensic_signals(self):
         pt = _make_lsb_pt(x_bits=8)
         try:
             result = self.engine.analyze(str(pt), band="suspicious")
             assert result["band"] == "suspicious"
             assert result["bit_depth"] is not None
             assert result["entropy"] is not None
-            assert result["distribution"] is None
-            assert result["capacity"] is None
-            assert result["magic_bytes"] is None
+            assert result["analysis_depth"] == "full (all 5 signals)"
+            assert result["distribution"] is not None
+            assert result["capacity"] is not None
+            assert result["magic_bytes"] is not None
         finally:
             os.unlink(pt)
 
@@ -376,25 +377,25 @@ class TestSummarizer:
         prompt = build_llm_prompt(findings)
         assert "STEGANOGRAPHY FORENSIC SIGNALS" not in prompt
 
-    def test_suspicious_band_prompt_has_signals_1_and_3(self):
+    def test_suspicious_band_prompt_has_all_signals(self):
         forensics = {
             "band": "suspicious",
             "bit_depth": {"estimated_x": 4, "anomalous_planes": ["Q3"],
                           "per_plane_entropy": {"Q3": 7.60},
                           "clean_entropy_baseline": {"Q3": 6.90},
                           "stealth_assessment": "Maximum Stealth", "description": "test"},
-            "distribution": None,
+            "distribution": {"pattern": "scattered", "sophistication": "Moderate", "description": "test"},
             "entropy": {"bits_per_byte": 7.85, "classification": "Compressed",
                         "entropy_band": "compressed", "assessment": "test"},
-            "capacity": None,
-            "magic_bytes": None,
+            "capacity": {"estimated_bytes": 123, "human_readable": "123 B", "description": "test"},
+            "magic_bytes": {"detected": False, "description": "No known signature detected"},
         }
         findings = self._make_findings(l3a_score=0.55, forensics=forensics)
         prompt = build_llm_prompt(findings)
         assert "SIGNAL 1" in prompt
         assert "SIGNAL 3" in prompt
-        assert "SIGNAL 2" not in prompt  # distribution not in suspicious band
-        assert "SIGNAL 4" not in prompt
+        for sig in ["SIGNAL 1", "SIGNAL 2", "SIGNAL 3", "SIGNAL 4", "SIGNAL 5"]:
+            assert sig in prompt, f"{sig} missing from suspicious-band prompt"
 
     def test_malicious_band_prompt_has_all_signals(self):
         forensics = {

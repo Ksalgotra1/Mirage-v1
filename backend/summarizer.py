@@ -81,20 +81,13 @@ def _format_forensic_context(forensics: dict[str, Any]) -> str:
         lines.append(f"  Stealth profile  : {bd.get('stealth_assessment', 'N/A')}")
         lines.append(f"  Interpretation   : {bd.get('description', '')}")
 
-    # Signal 3: Payload Entropy (always in both bands)
+    # Signal 3: Payload Entropy
     ent = forensics.get("entropy", {})
     if ent:
         lines.append("\n[SIGNAL 3] Payload Entropy Spectrum")
         lines.append(f"  Shannon entropy  : {ent.get('bits_per_byte', 'N/A')} bits/byte")
         lines.append(f"  Classification   : {ent.get('classification', 'N/A')}")
         lines.append(f"  Assessment       : {ent.get('assessment', '')}")
-
-    if band == "suspicious":
-        lines.append("\n[NOTE] Full forensic analysis (distribution geometry, payload capacity,")
-        lines.append("  and magic byte signatures) is available at MALICIOUS band (score ≥ 0.70).")
-        return "\n".join(lines)
-
-    # --- MALICIOUS band: add signals 2, 4, 5 ---
 
     # Signal 2: Distribution Geometry
     dist = forensics.get("distribution", {})

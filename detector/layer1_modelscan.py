@@ -57,13 +57,17 @@ class Layer1ModelScan:
                 if "CRITICAL" in sev or "HIGH" in sev or "MEDIUM" in sev:
                     verdict = True
 
-            if verdict or len(issues_list) > 0:
+            if verdict:
+                # modelscan confirmed a real threat — return immediately
                 return {
                     "layer": 1,
                     "verdict": verdict,
                     "issues": issues_list,
                     "coverage_note": None,
                 }
+            # modelscan returned only UNKNOWN/LOW-severity stubs (e.g. protocol-4
+            # pickles on Windows) without a confirmed verdict — fall through to the
+            # robust stack-aware fallback which catches nt.system / posix.system.
         except Exception:
             pass
 
